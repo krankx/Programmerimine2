@@ -1,0 +1,94 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0" version="29.5.4">
+  <diagram name="Page-1" id="PHeIbtQu8Hv-QOfwRWXG">
+    <mxGraphModel dx="1418" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="120" width="160" x="30" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div&gt;Employee&lt;/div&gt;&lt;div&gt;-------------------------&lt;/div&gt;&lt;div&gt;PK Id : int&lt;/div&gt;&lt;div&gt;FirstName : string(100)&lt;/div&gt;&lt;div&gt;LastName : string(100)&lt;/div&gt;&lt;div&gt;Email : string(150)&lt;/div&gt;&lt;div&gt;PasswordHash : string(255)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="160" x="30" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="160" width="200" x="540" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="130" width="200" x="530" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="160" width="200" x="100" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="120" width="160" x="290" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div&gt;Patient&lt;/div&gt;&lt;div&gt;-------------------------&lt;/div&gt;&lt;div&gt;PK Id : int&lt;/div&gt;&lt;div&gt;FirstName : string(100)&lt;/div&gt;&lt;div&gt;LastName : string(100)&lt;/div&gt;&lt;div&gt;DateOfBirth : date&lt;/div&gt;&lt;div&gt;FK EmployeeId : int&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="170" x="285" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div&gt;HealthMeasurement&lt;/div&gt;&lt;div&gt;-------------------------&lt;/div&gt;&lt;div&gt;PK Id : int&lt;/div&gt;&lt;div&gt;FK PatientId : int&lt;/div&gt;&lt;div&gt;MeasurementDateTime : datetime&lt;/div&gt;&lt;div&gt;Weight : decimal(5,2)&lt;/div&gt;&lt;div&gt;BloodSugar : decimal(5,2)&lt;/div&gt;&lt;div&gt;Systolic : int&lt;/div&gt;&lt;div&gt;Diastolic : int&lt;/div&gt;&lt;div&gt;Pulse : int&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="310" x="485" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div&gt;FoodProduct&lt;/div&gt;&lt;div&gt;-------------------------&lt;/div&gt;&lt;div&gt;PK Id : int&lt;/div&gt;&lt;div&gt;Name : string(150)&lt;/div&gt;&lt;div&gt;Energy : decimal(7,2)&lt;/div&gt;&lt;div&gt;Fat : decimal(6,2)&lt;/div&gt;&lt;div&gt;Carbohydrates : decimal(6,2)&lt;/div&gt;&lt;div&gt;Sugars : decimal(6,2)&lt;/div&gt;&lt;div&gt;Protein : decimal(6,2)&lt;/div&gt;&lt;div&gt;Salt : decimal(6,2)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="320" x="40" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div&gt;FoodDiaryEntry&lt;/div&gt;&lt;div&gt;-------------------------&lt;/div&gt;&lt;div&gt;PK Id : int&lt;/div&gt;&lt;div&gt;FK PatientId : int&lt;/div&gt;&lt;div&gt;FK FoodProductId : int&lt;/div&gt;&lt;div&gt;EntryDate : date&lt;/div&gt;&lt;div&gt;MealType : string(20)&lt;/div&gt;&lt;div&gt;QuantityGrams : decimal(6,2)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="180" x="540" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-13" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="310" y="270" />
+            </Array>
+            <mxPoint x="210" y="210" as="sourcePoint" />
+            <mxPoint x="360" y="170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-14" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="1" vertex="1">
+          <mxGeometry height="30" width="60" x="170" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="N" vertex="1">
+          <mxGeometry height="30" width="60" x="340" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="1" vertex="1">
+          <mxGeometry height="30" width="60" x="430" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-18" parent="1" style="text;whiteSpace=wrap;html=1;" value="N" vertex="1">
+          <mxGeometry height="40" width="40" x="630" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-19" edge="1" parent="1" source="zeJ55LLkyKm6-xtTk2ov-17" style="endArrow=none;html=1;rounded=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="zeJ55LLkyKm6-xtTk2ov-18" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="1" vertex="1">
+          <mxGeometry height="30" width="60" x="420" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-21" parent="1" style="text;whiteSpace=wrap;html=1;" value="N" vertex="1">
+          <mxGeometry height="40" width="40" x="630" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-22" edge="1" parent="1" source="zeJ55LLkyKm6-xtTk2ov-20" style="endArrow=none;html=1;rounded=0;entryX=0;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="zeJ55LLkyKm6-xtTk2ov-21" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="510" y="290" />
+            </Array>
+            <mxPoint x="410" y="270" as="sourcePoint" />
+            <mxPoint x="560" y="291" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-23" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="1" vertex="1">
+          <mxGeometry height="30" width="60" x="280" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-24" parent="1" style="text;whiteSpace=wrap;html=1;" value="N" vertex="1">
+          <mxGeometry height="40" width="40" x="510" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="zeJ55LLkyKm6-xtTk2ov-25" edge="1" parent="1" source="zeJ55LLkyKm6-xtTk2ov-23" style="endArrow=none;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="zeJ55LLkyKm6-xtTk2ov-24" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="330" as="sourcePoint" />
+            <mxPoint x="450" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
