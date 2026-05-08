@@ -1,15 +1,14 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Infrastructure.Paging;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.KaaluMootmised
 {
-    public class ListKaaluMootmisedQueryHandler : IRequestHandler<ListKaaluMootmisedQuery, OperationResult<IList<KaaluMootmine>>>
+    public class ListKaaluMootmisedQueryHandler : IRequestHandler<ListKaaluMootmisedQuery, OperationResult<PagedResult<KaaluMootmine>>>
     {
         private readonly ApplicationDbContext _dbContext;
         public ListKaaluMootmisedQueryHandler(ApplicationDbContext dbContext)
@@ -17,13 +16,13 @@ namespace KooliProjekt.Application.Features.KaaluMootmised
             _dbContext = dbContext;
         }
 
-        public async Task<OperationResult<IList<KaaluMootmine>>> Handle(ListKaaluMootmisedQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PagedResult<KaaluMootmine>>> Handle(ListKaaluMootmisedQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<IList<KaaluMootmine>>();
+            var result = new OperationResult<PagedResult<KaaluMootmine>>();
             result.Value = await _dbContext
                 .KaaluMootmised
                 .OrderByDescending(m => m.Kuupaev)
-                .ToListAsync(cancellationToken);
+                .GetPagedAsync(request.Page, request.PageSize);
 
             return result;
         }

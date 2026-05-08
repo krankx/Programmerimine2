@@ -1,11 +1,17 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace KooliProjekt.Application.Data
 {
     public class Toiduaine
     {
         public int Id { get; set; }
+
+        [Required]
+        [MaxLength(100)]
+        [MinLength(1)]
         public string Nimetus { get; set; }
+
         public decimal Energia { get; set; }            // kcal / 100g
         public decimal Valgud { get; set; }             // g / 100g
         public decimal Susivesikud { get; set; }        // g / 100g

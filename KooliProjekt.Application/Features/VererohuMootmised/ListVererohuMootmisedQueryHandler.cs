@@ -1,15 +1,14 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Infrastructure.Paging;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.VererohuMootmised
 {
-    public class ListVererohuMootmisedQueryHandler : IRequestHandler<ListVererohuMootmisedQuery, OperationResult<IList<VererohuMootmine>>>
+    public class ListVererohuMootmisedQueryHandler : IRequestHandler<ListVererohuMootmisedQuery, OperationResult<PagedResult<VererohuMootmine>>>
     {
         private readonly ApplicationDbContext _dbContext;
         public ListVererohuMootmisedQueryHandler(ApplicationDbContext dbContext)
@@ -17,14 +16,14 @@ namespace KooliProjekt.Application.Features.VererohuMootmised
             _dbContext = dbContext;
         }
 
-        public async Task<OperationResult<IList<VererohuMootmine>>> Handle(ListVererohuMootmisedQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PagedResult<VererohuMootmine>>> Handle(ListVererohuMootmisedQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<IList<VererohuMootmine>>();
+            var result = new OperationResult<PagedResult<VererohuMootmine>>();
             result.Value = await _dbContext
                 .VererohuMootmised
                 .OrderByDescending(m => m.Kuupaev)
                 .ThenByDescending(m => m.Kellaaeg)
-                .ToListAsync(cancellationToken);
+                .GetPagedAsync(request.Page, request.PageSize);
 
             return result;
         }

@@ -14,11 +14,10 @@ namespace KooliProjekt.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> List()
+        public async Task<IActionResult> List([FromQuery] ListSoogikorradQuery query)
         {
-            var query = new ListSoogikorradQuery();
-            var result = await _mediator.Send(query);
-            return Result(result);
+            var response = await _mediator.Send(query);
+            return Result(response);
         }
     }
 }
