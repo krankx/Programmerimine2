@@ -1,0 +1,40 @@
+## Visual Studio / .NET
+bin/
+obj/
+out/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+
+## Build results
+[Dd]ebugPublic/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+## VS code
+.vscode/
+
+## OS
+Thumbs.db
+.DS_Store
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+## Rider
+.idea/
+*.sln.iml
