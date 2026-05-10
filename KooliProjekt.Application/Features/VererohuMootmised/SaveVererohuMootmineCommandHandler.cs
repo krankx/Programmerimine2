@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
@@ -8,11 +9,11 @@ namespace KooliProjekt.Application.Features.VererohuMootmised
 {
     public class SaveVererohuMootmineCommandHandler : IRequestHandler<SaveVererohuMootmineCommand, OperationResult>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IVererohuMootmineRepository _vererohuMootmineRepository;
 
-        public SaveVererohuMootmineCommandHandler(ApplicationDbContext dbContext)
+        public SaveVererohuMootmineCommandHandler(IVererohuMootmineRepository vererohuMootmineRepository)
         {
-            _dbContext = dbContext;
+            _vererohuMootmineRepository = vererohuMootmineRepository;
         }
 
         public async Task<OperationResult> Handle(SaveVererohuMootmineCommand request, CancellationToken cancellationToken)
@@ -20,13 +21,9 @@ namespace KooliProjekt.Application.Features.VererohuMootmised
             var result = new OperationResult();
 
             var mootmine = new VererohuMootmine();
-            if (request.Id == 0)
+            if (request.Id != 0)
             {
-                await _dbContext.VererohuMootmised.AddAsync(mootmine);
-            }
-            else
-            {
-                mootmine = await _dbContext.VererohuMootmised.FindAsync(request.Id);
+                mootmine = await _vererohuMootmineRepository.GetByIdAsync(request.Id);
             }
 
             mootmine.Kuupaev = request.Kuupaev;
@@ -36,7 +33,7 @@ namespace KooliProjekt.Application.Features.VererohuMootmised
             mootmine.Pulss = request.Pulss;
             mootmine.PatsientId = request.PatsientId;
 
-            await _dbContext.SaveChangesAsync();
+            await _vererohuMootmineRepository.SaveAsync(mootmine);
 
             return result;
         }

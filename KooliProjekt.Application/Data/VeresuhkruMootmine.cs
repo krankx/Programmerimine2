@@ -2,9 +2,8 @@ using System;
 
 namespace KooliProjekt.Application.Data
 {
-    public class VeresuhkruMootmine
+    public class VeresuhkruMootmine : Entity
     {
-        public int Id { get; set; }
         public DateTime Kuupaev { get; set; }
         public TimeSpan Kellaaeg { get; set; }
         public decimal Veresuhkur { get; set; } // mmol/L

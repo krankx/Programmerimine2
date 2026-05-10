@@ -1,44 +1,39 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.Kasutajad
 {
     public class GetKasutajaQueryHandler : IRequestHandler<GetKasutajaQuery, OperationResult<object>>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IKasutajaRepository _kasutajaRepository;
 
-        public GetKasutajaQueryHandler(ApplicationDbContext dbContext)
+        public GetKasutajaQueryHandler(IKasutajaRepository kasutajaRepository)
         {
-            _dbContext = dbContext;
+            _kasutajaRepository = kasutajaRepository;
         }
 
         public async Task<OperationResult<object>> Handle(GetKasutajaQuery request, CancellationToken cancellationToken)
         {
             var result = new OperationResult<object>();
+            var kasutaja = await _kasutajaRepository.GetByIdAsync(request.Id);
 
-            result.Value = await _dbContext
-                .Kasutajad
-                .Include(k => k.Patsiendid)
-                .Where(k => k.Id == request.Id)
-                .Select(k => new
+            result.Value = new
+            {
+                Id = kasutaja.Id,
+                Eesnimi = kasutaja.Eesnimi,
+                Perekonnanimi = kasutaja.Perekonnanimi,
+                Email = kasutaja.Email,
+                Patsiendid = kasutaja.Patsiendid.Select(p => new
                 {
-                    Id = k.Id,
-                    Eesnimi = k.Eesnimi,
-                    Perekonnanimi = k.Perekonnanimi,
-                    Email = k.Email,
-                    Patsiendid = k.Patsiendid.Select(p => new
-                    {
-                        p.Id,
-                        p.Eesnimi,
-                        p.Perekonnanimi
-                    })
+                    p.Id,
+                    p.Eesnimi,
+                    p.Perekonnanimi
                 })
-                .FirstOrDefaultAsync();
+            };
 
             return result;
         }

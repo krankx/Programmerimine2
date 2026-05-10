@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
@@ -8,11 +9,11 @@ namespace KooliProjekt.Application.Features.Patsiendid
 {
     public class SavePatsientCommandHandler : IRequestHandler<SavePatsientCommand, OperationResult>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IPatsientRepository _patsientRepository;
 
-        public SavePatsientCommandHandler(ApplicationDbContext dbContext)
+        public SavePatsientCommandHandler(IPatsientRepository patsientRepository)
         {
-            _dbContext = dbContext;
+            _patsientRepository = patsientRepository;
         }
 
         public async Task<OperationResult> Handle(SavePatsientCommand request, CancellationToken cancellationToken)
@@ -20,13 +21,9 @@ namespace KooliProjekt.Application.Features.Patsiendid
             var result = new OperationResult();
 
             var patsient = new Patsient();
-            if (request.Id == 0)
+            if (request.Id != 0)
             {
-                await _dbContext.Patsiendid.AddAsync(patsient);
-            }
-            else
-            {
-                patsient = await _dbContext.Patsiendid.FindAsync(request.Id);
+                patsient = await _patsientRepository.GetByIdAsync(request.Id);
             }
 
             patsient.Eesnimi = request.Eesnimi;
@@ -35,7 +32,7 @@ namespace KooliProjekt.Application.Features.Patsiendid
             patsient.Synniaeg = request.Synniaeg;
             patsient.KasutajaId = request.KasutajaId;
 
-            await _dbContext.SaveChangesAsync();
+            await _patsientRepository.SaveAsync(patsient);
 
             return result;
         }

@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace KooliProjekt.Application.Data
 {
-    public class Kasutaja
+    public class Kasutaja : Entity
     {
-        public int Id { get; set; }
-
         [Required]
         [MaxLength(50)]
         [MinLength(1)]

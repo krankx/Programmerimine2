@@ -1,40 +1,35 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.VererohuMootmised
 {
     public class GetVererohuMootmineQueryHandler : IRequestHandler<GetVererohuMootmineQuery, OperationResult<object>>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IVererohuMootmineRepository _vererohuMootmineRepository;
 
-        public GetVererohuMootmineQueryHandler(ApplicationDbContext dbContext)
+        public GetVererohuMootmineQueryHandler(IVererohuMootmineRepository vererohuMootmineRepository)
         {
-            _dbContext = dbContext;
+            _vererohuMootmineRepository = vererohuMootmineRepository;
         }
 
         public async Task<OperationResult<object>> Handle(GetVererohuMootmineQuery request, CancellationToken cancellationToken)
         {
             var result = new OperationResult<object>();
+            var mootmine = await _vererohuMootmineRepository.GetByIdAsync(request.Id);
 
-            result.Value = await _dbContext
-                .VererohuMootmised
-                .Where(m => m.Id == request.Id)
-                .Select(m => new
-                {
-                    Id = m.Id,
-                    Kuupaev = m.Kuupaev,
-                    Kellaaeg = m.Kellaaeg,
-                    Sustoolne = m.Sustoolne,
-                    Diastoolne = m.Diastoolne,
-                    Pulss = m.Pulss,
-                    PatsientId = m.PatsientId
-                })
-                .FirstOrDefaultAsync();
+            result.Value = new
+            {
+                Id = mootmine.Id,
+                Kuupaev = mootmine.Kuupaev,
+                Kellaaeg = mootmine.Kellaaeg,
+                Sustoolne = mootmine.Sustoolne,
+                Diastoolne = mootmine.Diastoolne,
+                Pulss = mootmine.Pulss,
+                PatsientId = mootmine.PatsientId
+            };
 
             return result;
         }

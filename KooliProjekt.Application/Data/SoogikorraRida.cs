@@ -1,8 +1,7 @@
 namespace KooliProjekt.Application.Data
 {
-    public class SoogikorraRida
+    public class SoogikorraRida : Entity
     {
-        public int Id { get; set; }
         public decimal Kogus { get; set; } // grammides
 
         public int SoogikordId { get; set; }

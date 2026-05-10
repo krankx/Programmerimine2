@@ -1,6 +1,7 @@
 using FluentValidation;
 using KooliProjekt.Application.Behaviors;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -28,6 +29,16 @@ namespace KooliProjekt.WebAPI
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Repositoride registreerimine
+            builder.Services.AddScoped<IKasutajaRepository, KasutajaRepository>();
+            builder.Services.AddScoped<IPatsientRepository, PatsientRepository>();
+            builder.Services.AddScoped<IKaaluMootmineRepository, KaaluMootmineRepository>();
+            builder.Services.AddScoped<IVeresuhkruMootmineRepository, VeresuhkruMootmineRepository>();
+            builder.Services.AddScoped<IVererohuMootmineRepository, VererohuMootmineRepository>();
+            builder.Services.AddScoped<IToiduaineRepository, ToiduaineRepository>();
+            builder.Services.AddScoped<ISoogikordRepository, SoogikordRepository>();
+            builder.Services.AddScoped<ISoogikorraRidaRepository, SoogikorraRidaRepository>();
 
             var applicationAssembly = typeof(ErrorHandlingBehavior<,>).Assembly;
             builder.Services.AddValidatorsFromAssembly(applicationAssembly);

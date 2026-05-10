@@ -2,9 +2,8 @@ using System;
 
 namespace KooliProjekt.Application.Data
 {
-    public class KaaluMootmine
+    public class KaaluMootmine : Entity
     {
-        public int Id { get; set; }
         public DateTime Kuupaev { get; set; }
         public decimal Kaal { get; set; } // kg
 

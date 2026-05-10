@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
@@ -8,11 +9,11 @@ namespace KooliProjekt.Application.Features.VeresuhkruMootmised
 {
     public class SaveVeresuhkruMootmineCommandHandler : IRequestHandler<SaveVeresuhkruMootmineCommand, OperationResult>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IVeresuhkruMootmineRepository _veresuhkruMootmineRepository;
 
-        public SaveVeresuhkruMootmineCommandHandler(ApplicationDbContext dbContext)
+        public SaveVeresuhkruMootmineCommandHandler(IVeresuhkruMootmineRepository veresuhkruMootmineRepository)
         {
-            _dbContext = dbContext;
+            _veresuhkruMootmineRepository = veresuhkruMootmineRepository;
         }
 
         public async Task<OperationResult> Handle(SaveVeresuhkruMootmineCommand request, CancellationToken cancellationToken)
@@ -20,13 +21,9 @@ namespace KooliProjekt.Application.Features.VeresuhkruMootmised
             var result = new OperationResult();
 
             var mootmine = new VeresuhkruMootmine();
-            if (request.Id == 0)
+            if (request.Id != 0)
             {
-                await _dbContext.VeresuhkruMootmised.AddAsync(mootmine);
-            }
-            else
-            {
-                mootmine = await _dbContext.VeresuhkruMootmised.FindAsync(request.Id);
+                mootmine = await _veresuhkruMootmineRepository.GetByIdAsync(request.Id);
             }
 
             mootmine.Kuupaev = request.Kuupaev;
@@ -34,7 +31,7 @@ namespace KooliProjekt.Application.Features.VeresuhkruMootmised
             mootmine.Veresuhkur = request.Veresuhkur;
             mootmine.PatsientId = request.PatsientId;
 
-            await _dbContext.SaveChangesAsync();
+            await _veresuhkruMootmineRepository.SaveAsync(mootmine);
 
             return result;
         }

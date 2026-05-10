@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
@@ -8,11 +9,11 @@ namespace KooliProjekt.Application.Features.SoogikorraRead
 {
     public class SaveSoogikorraRidaCommandHandler : IRequestHandler<SaveSoogikorraRidaCommand, OperationResult>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly ISoogikorraRidaRepository _soogikorraRidaRepository;
 
-        public SaveSoogikorraRidaCommandHandler(ApplicationDbContext dbContext)
+        public SaveSoogikorraRidaCommandHandler(ISoogikorraRidaRepository soogikorraRidaRepository)
         {
-            _dbContext = dbContext;
+            _soogikorraRidaRepository = soogikorraRidaRepository;
         }
 
         public async Task<OperationResult> Handle(SaveSoogikorraRidaCommand request, CancellationToken cancellationToken)
@@ -20,20 +21,16 @@ namespace KooliProjekt.Application.Features.SoogikorraRead
             var result = new OperationResult();
 
             var rida = new SoogikorraRida();
-            if (request.Id == 0)
+            if (request.Id != 0)
             {
-                await _dbContext.SoogikorraRead.AddAsync(rida);
-            }
-            else
-            {
-                rida = await _dbContext.SoogikorraRead.FindAsync(request.Id);
+                rida = await _soogikorraRidaRepository.GetByIdAsync(request.Id);
             }
 
             rida.Kogus = request.Kogus;
             rida.SoogikordId = request.SoogikordId;
             rida.ToiduaineId = request.ToiduaineId;
 
-            await _dbContext.SaveChangesAsync();
+            await _soogikorraRidaRepository.SaveAsync(rida);
 
             return result;
         }

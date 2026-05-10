@@ -45,6 +45,6 @@ INSERT INTO SoogikorraRead (Kogus, SoogikordId, ToiduaineId) VALUES
 (200, 2, 2),
 (80,  2, 1);
 
--- Bonus: ToDoLists/ToDoItems (õpetaja näide)
+
 INSERT INTO ToDoLists (Name) VALUES ('Test list');
 INSERT INTO ToDoItems (Title, IsDone, ToDoListId) VALUES ('Test task', 0, 1);
