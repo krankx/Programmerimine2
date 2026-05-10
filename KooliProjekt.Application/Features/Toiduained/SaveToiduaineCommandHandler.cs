@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
@@ -8,11 +9,11 @@ namespace KooliProjekt.Application.Features.Toiduained
 {
     public class SaveToiduaineCommandHandler : IRequestHandler<SaveToiduaineCommand, OperationResult>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IToiduaineRepository _toiduaineRepository;
 
-        public SaveToiduaineCommandHandler(ApplicationDbContext dbContext)
+        public SaveToiduaineCommandHandler(IToiduaineRepository toiduaineRepository)
         {
-            _dbContext = dbContext;
+            _toiduaineRepository = toiduaineRepository;
         }
 
         public async Task<OperationResult> Handle(SaveToiduaineCommand request, CancellationToken cancellationToken)
@@ -20,13 +21,9 @@ namespace KooliProjekt.Application.Features.Toiduained
             var result = new OperationResult();
 
             var toiduaine = new Toiduaine();
-            if (request.Id == 0)
+            if (request.Id != 0)
             {
-                await _dbContext.Toiduained.AddAsync(toiduaine);
-            }
-            else
-            {
-                toiduaine = await _dbContext.Toiduained.FindAsync(request.Id);
+                toiduaine = await _toiduaineRepository.GetByIdAsync(request.Id);
             }
 
             toiduaine.Nimetus = request.Nimetus;
@@ -39,7 +36,7 @@ namespace KooliProjekt.Application.Features.Toiduained
             toiduaine.Kiudained = request.Kiudained;
             toiduaine.Sool = request.Sool;
 
-            await _dbContext.SaveChangesAsync();
+            await _toiduaineRepository.SaveAsync(toiduaine);
 
             return result;
         }

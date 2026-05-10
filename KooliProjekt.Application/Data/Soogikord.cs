@@ -10,9 +10,8 @@ namespace KooliProjekt.Application.Data
         Ohtusook = 3
     }
 
-    public class Soogikord
+    public class Soogikord : Entity
     {
-        public int Id { get; set; }
         public DateTime Kuupaev { get; set; }
         public SoogikorraTyyp Tyyp { get; set; }
 

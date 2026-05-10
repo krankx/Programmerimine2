@@ -1,43 +1,38 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.Toiduained
 {
     public class GetToiduaineQueryHandler : IRequestHandler<GetToiduaineQuery, OperationResult<object>>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IToiduaineRepository _toiduaineRepository;
 
-        public GetToiduaineQueryHandler(ApplicationDbContext dbContext)
+        public GetToiduaineQueryHandler(IToiduaineRepository toiduaineRepository)
         {
-            _dbContext = dbContext;
+            _toiduaineRepository = toiduaineRepository;
         }
 
         public async Task<OperationResult<object>> Handle(GetToiduaineQuery request, CancellationToken cancellationToken)
         {
             var result = new OperationResult<object>();
+            var toiduaine = await _toiduaineRepository.GetByIdAsync(request.Id);
 
-            result.Value = await _dbContext
-                .Toiduained
-                .Where(t => t.Id == request.Id)
-                .Select(t => new
-                {
-                    Id = t.Id,
-                    Nimetus = t.Nimetus,
-                    Energia = t.Energia,
-                    Valgud = t.Valgud,
-                    Susivesikud = t.Susivesikud,
-                    MillestSuhkrud = t.MillestSuhkrud,
-                    Rasvad = t.Rasvad,
-                    MillestKullastunud = t.MillestKullastunud,
-                    Kiudained = t.Kiudained,
-                    Sool = t.Sool
-                })
-                .FirstOrDefaultAsync();
+            result.Value = new
+            {
+                Id = toiduaine.Id,
+                Nimetus = toiduaine.Nimetus,
+                Energia = toiduaine.Energia,
+                Valgud = toiduaine.Valgud,
+                Susivesikud = toiduaine.Susivesikud,
+                MillestSuhkrud = toiduaine.MillestSuhkrud,
+                Rasvad = toiduaine.Rasvad,
+                MillestKullastunud = toiduaine.MillestKullastunud,
+                Kiudained = toiduaine.Kiudained,
+                Sool = toiduaine.Sool
+            };
 
             return result;
         }

@@ -2,9 +2,8 @@ using System;
 
 namespace KooliProjekt.Application.Data
 {
-    public class VererohuMootmine
+    public class VererohuMootmine : Entity
     {
-        public int Id { get; set; }
         public DateTime Kuupaev { get; set; }
         public TimeSpan Kellaaeg { get; set; }
         public int Sustoolne { get; set; }   // ülemine

@@ -1,44 +1,39 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.Soogikorrad
 {
     public class GetSoogikordQueryHandler : IRequestHandler<GetSoogikordQuery, OperationResult<object>>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly ISoogikordRepository _soogikordRepository;
 
-        public GetSoogikordQueryHandler(ApplicationDbContext dbContext)
+        public GetSoogikordQueryHandler(ISoogikordRepository soogikordRepository)
         {
-            _dbContext = dbContext;
+            _soogikordRepository = soogikordRepository;
         }
 
         public async Task<OperationResult<object>> Handle(GetSoogikordQuery request, CancellationToken cancellationToken)
         {
             var result = new OperationResult<object>();
+            var soogikord = await _soogikordRepository.GetByIdAsync(request.Id);
 
-            result.Value = await _dbContext
-                .Soogikorrad
-                .Include(s => s.Read)
-                .Where(s => s.Id == request.Id)
-                .Select(s => new
+            result.Value = new
+            {
+                Id = soogikord.Id,
+                Kuupaev = soogikord.Kuupaev,
+                Tyyp = soogikord.Tyyp,
+                PatsientId = soogikord.PatsientId,
+                Read = soogikord.Read.Select(r => new
                 {
-                    Id = s.Id,
-                    Kuupaev = s.Kuupaev,
-                    Tyyp = s.Tyyp,
-                    PatsientId = s.PatsientId,
-                    Read = s.Read.Select(r => new
-                    {
-                        r.Id,
-                        r.Kogus,
-                        r.ToiduaineId
-                    })
+                    r.Id,
+                    r.Kogus,
+                    r.ToiduaineId
                 })
-                .FirstOrDefaultAsync();
+            };
 
             return result;
         }

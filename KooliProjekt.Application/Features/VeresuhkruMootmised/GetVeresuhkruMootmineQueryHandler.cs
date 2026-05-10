@@ -1,38 +1,33 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Features.VeresuhkruMootmised
 {
     public class GetVeresuhkruMootmineQueryHandler : IRequestHandler<GetVeresuhkruMootmineQuery, OperationResult<object>>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IVeresuhkruMootmineRepository _veresuhkruMootmineRepository;
 
-        public GetVeresuhkruMootmineQueryHandler(ApplicationDbContext dbContext)
+        public GetVeresuhkruMootmineQueryHandler(IVeresuhkruMootmineRepository veresuhkruMootmineRepository)
         {
-            _dbContext = dbContext;
+            _veresuhkruMootmineRepository = veresuhkruMootmineRepository;
         }
 
         public async Task<OperationResult<object>> Handle(GetVeresuhkruMootmineQuery request, CancellationToken cancellationToken)
         {
             var result = new OperationResult<object>();
+            var mootmine = await _veresuhkruMootmineRepository.GetByIdAsync(request.Id);
 
-            result.Value = await _dbContext
-                .VeresuhkruMootmised
-                .Where(m => m.Id == request.Id)
-                .Select(m => new
-                {
-                    Id = m.Id,
-                    Kuupaev = m.Kuupaev,
-                    Kellaaeg = m.Kellaaeg,
-                    Veresuhkur = m.Veresuhkur,
-                    PatsientId = m.PatsientId
-                })
-                .FirstOrDefaultAsync();
+            result.Value = new
+            {
+                Id = mootmine.Id,
+                Kuupaev = mootmine.Kuupaev,
+                Kellaaeg = mootmine.Kellaaeg,
+                Veresuhkur = mootmine.Veresuhkur,
+                PatsientId = mootmine.PatsientId
+            };
 
             return result;
         }

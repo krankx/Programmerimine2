@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
+using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
@@ -8,11 +9,11 @@ namespace KooliProjekt.Application.Features.Kasutajad
 {
     public class SaveKasutajaCommandHandler : IRequestHandler<SaveKasutajaCommand, OperationResult>
     {
-        private readonly ApplicationDbContext _dbContext;
+        private readonly IKasutajaRepository _kasutajaRepository;
 
-        public SaveKasutajaCommandHandler(ApplicationDbContext dbContext)
+        public SaveKasutajaCommandHandler(IKasutajaRepository kasutajaRepository)
         {
-            _dbContext = dbContext;
+            _kasutajaRepository = kasutajaRepository;
         }
 
         public async Task<OperationResult> Handle(SaveKasutajaCommand request, CancellationToken cancellationToken)
@@ -20,13 +21,9 @@ namespace KooliProjekt.Application.Features.Kasutajad
             var result = new OperationResult();
 
             var kasutaja = new Kasutaja();
-            if (request.Id == 0)
+            if (request.Id != 0)
             {
-                await _dbContext.Kasutajad.AddAsync(kasutaja);
-            }
-            else
-            {
-                kasutaja = await _dbContext.Kasutajad.FindAsync(request.Id);
+                kasutaja = await _kasutajaRepository.GetByIdAsync(request.Id);
             }
 
             kasutaja.Eesnimi = request.Eesnimi;
@@ -34,7 +31,7 @@ namespace KooliProjekt.Application.Features.Kasutajad
             kasutaja.Email = request.Email;
             kasutaja.Parool = request.Parool;
 
-            await _dbContext.SaveChangesAsync();
+            await _kasutajaRepository.SaveAsync(kasutaja);
 
             return result;
         }

@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace KooliProjekt.Application.Data
 {
-    public class Toiduaine
+    public class Toiduaine : Entity
     {
-        public int Id { get; set; }
-
         [Required]
         [MaxLength(100)]
         [MinLength(1)]
