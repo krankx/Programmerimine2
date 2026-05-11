@@ -1,26 +1,43 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data.Repositories;
+using KooliProjekt.Application.Dto;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
 namespace KooliProjekt.Application.Features.VererohuMootmised
 {
-    public class GetVererohuMootmineQueryHandler : IRequestHandler<GetVererohuMootmineQuery, OperationResult<object>>
+    public class GetVererohuMootmineQueryHandler : IRequestHandler<GetVererohuMootmineQuery, OperationResult<VererohuMootmineDto>>
     {
         private readonly IVererohuMootmineRepository _vererohuMootmineRepository;
 
         public GetVererohuMootmineQueryHandler(IVererohuMootmineRepository vererohuMootmineRepository)
         {
+            if (vererohuMootmineRepository == null)
+            {
+                throw new ArgumentNullException(nameof(vererohuMootmineRepository));
+            }
             _vererohuMootmineRepository = vererohuMootmineRepository;
         }
 
-        public async Task<OperationResult<object>> Handle(GetVererohuMootmineQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<VererohuMootmineDto>> Handle(GetVererohuMootmineQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<object>();
+            var result = new OperationResult<VererohuMootmineDto>();
+
+            if (request == null)
+            {
+                return result;
+            }
+
             var mootmine = await _vererohuMootmineRepository.GetByIdAsync(request.Id);
 
-            result.Value = new
+            if (mootmine == null)
+            {
+                return result;
+            }
+
+            result.Value = new VererohuMootmineDto
             {
                 Id = mootmine.Id,
                 Kuupaev = mootmine.Kuupaev,

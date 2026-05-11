@@ -1,26 +1,43 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data.Repositories;
+using KooliProjekt.Application.Dto;
 using KooliProjekt.Application.Infrastructure.Results;
 using MediatR;
 
 namespace KooliProjekt.Application.Features.Toiduained
 {
-    public class GetToiduaineQueryHandler : IRequestHandler<GetToiduaineQuery, OperationResult<object>>
+    public class GetToiduaineQueryHandler : IRequestHandler<GetToiduaineQuery, OperationResult<ToiduaineDto>>
     {
         private readonly IToiduaineRepository _toiduaineRepository;
 
         public GetToiduaineQueryHandler(IToiduaineRepository toiduaineRepository)
         {
+            if (toiduaineRepository == null)
+            {
+                throw new ArgumentNullException(nameof(toiduaineRepository));
+            }
             _toiduaineRepository = toiduaineRepository;
         }
 
-        public async Task<OperationResult<object>> Handle(GetToiduaineQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<ToiduaineDto>> Handle(GetToiduaineQuery request, CancellationToken cancellationToken)
         {
-            var result = new OperationResult<object>();
+            var result = new OperationResult<ToiduaineDto>();
+
+            if (request == null)
+            {
+                return result;
+            }
+
             var toiduaine = await _toiduaineRepository.GetByIdAsync(request.Id);
 
-            result.Value = new
+            if (toiduaine == null)
+            {
+                return result;
+            }
+
+            result.Value = new ToiduaineDto
             {
                 Id = toiduaine.Id,
                 Nimetus = toiduaine.Nimetus,
