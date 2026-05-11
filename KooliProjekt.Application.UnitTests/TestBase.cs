@@ -25,6 +25,14 @@ namespace KooliProjekt.Application.UnitTests
             }
         }
 
+        protected ApplicationDbContext GetFaultyDbContext()
+        {
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>();
+            var dbContext = new ApplicationDbContext(options.Options);
+
+            return dbContext;
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)

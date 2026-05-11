@@ -23,9 +23,14 @@ namespace KooliProjekt.Application.Features.VeresuhkruMootmised
 
         public async Task<OperationResult<VeresuhkruMootmineDto>> Handle(GetVeresuhkruMootmineQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<VeresuhkruMootmineDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }

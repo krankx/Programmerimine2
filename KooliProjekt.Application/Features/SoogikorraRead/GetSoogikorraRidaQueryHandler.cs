@@ -23,9 +23,14 @@ namespace KooliProjekt.Application.Features.SoogikorraRead
 
         public async Task<OperationResult<SoogikorraRidaDto>> Handle(GetSoogikorraRidaQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<SoogikorraRidaDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }

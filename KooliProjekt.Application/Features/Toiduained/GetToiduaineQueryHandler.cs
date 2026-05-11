@@ -23,9 +23,14 @@ namespace KooliProjekt.Application.Features.Toiduained
 
         public async Task<OperationResult<ToiduaineDto>> Handle(GetToiduaineQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<ToiduaineDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }

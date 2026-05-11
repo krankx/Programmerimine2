@@ -23,9 +23,14 @@ namespace KooliProjekt.Application.Features.Patsiendid
 
         public async Task<OperationResult<PatsientDto>> Handle(GetPatsientQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<PatsientDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }

@@ -23,9 +23,14 @@ namespace KooliProjekt.Application.Features.KaaluMootmised
 
         public async Task<OperationResult<KaaluMootmineDto>> Handle(GetKaaluMootmineQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<KaaluMootmineDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }

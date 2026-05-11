@@ -24,9 +24,14 @@ namespace KooliProjekt.Application.Features.Kasutajad
 
         public async Task<OperationResult<KasutajaDetailsDto>> Handle(GetKasutajaQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<KasutajaDetailsDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }

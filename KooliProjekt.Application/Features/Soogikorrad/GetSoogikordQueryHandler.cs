@@ -24,9 +24,14 @@ namespace KooliProjekt.Application.Features.Soogikorrad
 
         public async Task<OperationResult<SoogikordDetailsDto>> Handle(GetSoogikordQuery request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult<SoogikordDetailsDto>();
 
-            if (request == null)
+            if (request.Id <= 0)
             {
                 return result;
             }
