@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,17 +15,39 @@ namespace KooliProjekt.Application.Features.Toiduained
 
         public DeleteToiduaineCommandHandler(ApplicationDbContext dbContext)
         {
+            if (dbContext == null)
+            {
+                throw new ArgumentNullException(nameof(dbContext));
+            }
+
             _dbContext = dbContext;
         }
 
         public async Task<OperationResult> Handle(DeleteToiduaineCommand request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult();
 
-            await _dbContext
-                .Toiduained
+            if (request.Id <= 0)
+            {
+                return result;
+            }
+
+            var toiduaine = await _dbContext.Toiduained
                 .Where(t => t.Id == request.Id)
-                .ExecuteDeleteAsync();
+                .FirstOrDefaultAsync();
+
+            if (toiduaine == null)
+            {
+                return result;
+            }
+
+            _dbContext.Toiduained.Remove(toiduaine);
+            await _dbContext.SaveChangesAsync();
 
             return result;
         }

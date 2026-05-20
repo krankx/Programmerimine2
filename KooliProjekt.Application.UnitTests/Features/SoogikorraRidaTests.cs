@@ -86,6 +86,10 @@ namespace KooliProjekt.Application.UnitTests.Features
             var query = new GetSoogikorraRidaQuery { Id = id };
             var handler = new GetSoogikorraRidaQueryHandler(repo);
 
+            var rida = new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            await DbContext.SoogikorraRead.AddAsync(rida);
+            await DbContext.SaveChangesAsync();
+
             var result = await handler.Handle(query, CancellationToken.None);
 
             Assert.NotNull(result);
@@ -176,6 +180,88 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        // ===== DELETE TESTS =====
+
+        [Fact]
+        public void Delete_should_throw_when_dbcontext_is_null()
+        {
+            var dbContext = (ApplicationDbContext)null;
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                new DeleteSoogikorraRidaCommandHandler(dbContext);
+            });
+
+            Assert.Equal(nameof(dbContext), exception.ParamName);
+        }
+
+        [Fact]
+        public async Task Delete_should_throw_when_request_is_null()
+        {
+            var request = (DeleteSoogikorraRidaCommand)null;
+            var handler = new DeleteSoogikorraRidaCommandHandler(DbContext);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task Delete_should_return_when_request_id_is_null_or_negative(int id)
+        {
+            var query = new DeleteSoogikorraRidaCommand { Id = id };
+            var faultyDbContext = GetFaultyDbContext();
+            var handler = new DeleteSoogikorraRidaCommandHandler(faultyDbContext);
+
+            var rida = new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            await DbContext.SoogikorraRead.AddAsync(rida);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Delete_should_remove_existing_soogikorra_rida()
+        {
+            var query = new DeleteSoogikorraRidaCommand { Id = 1 };
+            var handler = new DeleteSoogikorraRidaCommandHandler(DbContext);
+
+            var rida = new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            await DbContext.SoogikorraRead.AddAsync(rida);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.SoogikorraRead.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
+        }
+
+        [Fact]
+        public async Task Delete_should_not_fail_when_soogikorra_rida_does_not_exists()
+        {
+            var query = new DeleteSoogikorraRidaCommand { Id = 101 };
+            var handler = new DeleteSoogikorraRidaCommandHandler(DbContext);
+
+            var rida = new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            await DbContext.SoogikorraRead.AddAsync(rida);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.SoogikorraRead.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
         }
     }
 }

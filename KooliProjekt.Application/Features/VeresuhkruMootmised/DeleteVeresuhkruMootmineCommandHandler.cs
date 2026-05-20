@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,17 +15,39 @@ namespace KooliProjekt.Application.Features.VeresuhkruMootmised
 
         public DeleteVeresuhkruMootmineCommandHandler(ApplicationDbContext dbContext)
         {
+            if (dbContext == null)
+            {
+                throw new ArgumentNullException(nameof(dbContext));
+            }
+
             _dbContext = dbContext;
         }
 
         public async Task<OperationResult> Handle(DeleteVeresuhkruMootmineCommand request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult();
 
-            await _dbContext
-                .VeresuhkruMootmised
+            if (request.Id <= 0)
+            {
+                return result;
+            }
+
+            var mootmine = await _dbContext.VeresuhkruMootmised
                 .Where(m => m.Id == request.Id)
-                .ExecuteDeleteAsync();
+                .FirstOrDefaultAsync();
+
+            if (mootmine == null)
+            {
+                return result;
+            }
+
+            _dbContext.VeresuhkruMootmised.Remove(mootmine);
+            await _dbContext.SaveChangesAsync();
 
             return result;
         }

@@ -90,6 +90,10 @@ namespace KooliProjekt.Application.UnitTests.Features
             var query = new GetPatsientQuery { Id = id };
             var handler = new GetPatsientQueryHandler(repo);
 
+            var patsient = new Patsient { Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            await DbContext.Patsiendid.AddAsync(patsient);
+            await DbContext.SaveChangesAsync();
+
             var result = await handler.Handle(query, CancellationToken.None);
 
             Assert.NotNull(result);
@@ -182,6 +186,89 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        // ===== DELETE TESTS =====
+
+        [Fact]
+        public void Delete_should_throw_when_dbcontext_is_null()
+        {
+            var dbContext = (ApplicationDbContext)null;
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                new DeletePatsientCommandHandler(dbContext);
+            });
+
+            Assert.Equal(nameof(dbContext), exception.ParamName);
+        }
+
+        [Fact]
+        public async Task Delete_should_throw_when_request_is_null()
+        {
+            var request = (DeletePatsientCommand)null;
+            var handler = new DeletePatsientCommandHandler(DbContext);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task Delete_should_return_when_request_id_is_null_or_negative(int id)
+        {
+            var query = new DeletePatsientCommand { Id = id };
+            var faultyDbContext = GetFaultyDbContext();
+            var handler = new DeletePatsientCommandHandler(faultyDbContext);
+
+            var patsient = new Patsient { Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            await DbContext.Patsiendid.AddAsync(patsient);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Delete_should_remove_existing_patsient()
+        {
+            var query = new DeletePatsientCommand { Id = 1 };
+            var handler = new DeletePatsientCommandHandler(DbContext);
+
+            var patsient = new Patsient { Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            await DbContext.Patsiendid.AddAsync(patsient);
+            await DbContext.KaaluMootmised.AddAsync(new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 });
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.Patsiendid.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
+        }
+
+        [Fact]
+        public async Task Delete_should_not_fail_when_patsient_does_not_exists()
+        {
+            var query = new DeletePatsientCommand { Id = 101 };
+            var handler = new DeletePatsientCommandHandler(DbContext);
+
+            var patsient = new Patsient { Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            await DbContext.Patsiendid.AddAsync(patsient);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.Patsiendid.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
         }
     }
 }

@@ -86,6 +86,10 @@ namespace KooliProjekt.Application.UnitTests.Features
             var query = new GetKaaluMootmineQuery { Id = id };
             var handler = new GetKaaluMootmineQueryHandler(repo);
 
+            var mootmine = new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            await DbContext.KaaluMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
             var result = await handler.Handle(query, CancellationToken.None);
 
             Assert.NotNull(result);
@@ -176,6 +180,88 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        // ===== DELETE TESTS =====
+
+        [Fact]
+        public void Delete_should_throw_when_dbcontext_is_null()
+        {
+            var dbContext = (ApplicationDbContext)null;
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                new DeleteKaaluMootmineCommandHandler(dbContext);
+            });
+
+            Assert.Equal(nameof(dbContext), exception.ParamName);
+        }
+
+        [Fact]
+        public async Task Delete_should_throw_when_request_is_null()
+        {
+            var request = (DeleteKaaluMootmineCommand)null;
+            var handler = new DeleteKaaluMootmineCommandHandler(DbContext);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task Delete_should_return_when_request_id_is_null_or_negative(int id)
+        {
+            var query = new DeleteKaaluMootmineCommand { Id = id };
+            var faultyDbContext = GetFaultyDbContext();
+            var handler = new DeleteKaaluMootmineCommandHandler(faultyDbContext);
+
+            var mootmine = new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            await DbContext.KaaluMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Delete_should_remove_existing_kaalu_mootmine()
+        {
+            var query = new DeleteKaaluMootmineCommand { Id = 1 };
+            var handler = new DeleteKaaluMootmineCommandHandler(DbContext);
+
+            var mootmine = new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            await DbContext.KaaluMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.KaaluMootmised.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
+        }
+
+        [Fact]
+        public async Task Delete_should_not_fail_when_kaalu_mootmine_does_not_exists()
+        {
+            var query = new DeleteKaaluMootmineCommand { Id = 101 };
+            var handler = new DeleteKaaluMootmineCommandHandler(DbContext);
+
+            var mootmine = new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            await DbContext.KaaluMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.KaaluMootmised.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,17 +15,39 @@ namespace KooliProjekt.Application.Features.SoogikorraRead
 
         public DeleteSoogikorraRidaCommandHandler(ApplicationDbContext dbContext)
         {
+            if (dbContext == null)
+            {
+                throw new ArgumentNullException(nameof(dbContext));
+            }
+
             _dbContext = dbContext;
         }
 
         public async Task<OperationResult> Handle(DeleteSoogikorraRidaCommand request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult();
 
-            await _dbContext
-                .SoogikorraRead
+            if (request.Id <= 0)
+            {
+                return result;
+            }
+
+            var rida = await _dbContext.SoogikorraRead
                 .Where(r => r.Id == request.Id)
-                .ExecuteDeleteAsync();
+                .FirstOrDefaultAsync();
+
+            if (rida == null)
+            {
+                return result;
+            }
+
+            _dbContext.SoogikorraRead.Remove(rida);
+            await _dbContext.SaveChangesAsync();
 
             return result;
         }

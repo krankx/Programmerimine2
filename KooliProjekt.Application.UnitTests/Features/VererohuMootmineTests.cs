@@ -92,6 +92,10 @@ namespace KooliProjekt.Application.UnitTests.Features
             var query = new GetVererohuMootmineQuery { Id = id };
             var handler = new GetVererohuMootmineQueryHandler(repo);
 
+            var mootmine = new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            await DbContext.VererohuMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
             var result = await handler.Handle(query, CancellationToken.None);
 
             Assert.NotNull(result);
@@ -185,6 +189,88 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        // ===== DELETE TESTS =====
+
+        [Fact]
+        public void Delete_should_throw_when_dbcontext_is_null()
+        {
+            var dbContext = (ApplicationDbContext)null;
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                new DeleteVererohuMootmineCommandHandler(dbContext);
+            });
+
+            Assert.Equal(nameof(dbContext), exception.ParamName);
+        }
+
+        [Fact]
+        public async Task Delete_should_throw_when_request_is_null()
+        {
+            var request = (DeleteVererohuMootmineCommand)null;
+            var handler = new DeleteVererohuMootmineCommandHandler(DbContext);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task Delete_should_return_when_request_id_is_null_or_negative(int id)
+        {
+            var query = new DeleteVererohuMootmineCommand { Id = id };
+            var faultyDbContext = GetFaultyDbContext();
+            var handler = new DeleteVererohuMootmineCommandHandler(faultyDbContext);
+
+            var mootmine = new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            await DbContext.VererohuMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Delete_should_remove_existing_vererohu_mootmine()
+        {
+            var query = new DeleteVererohuMootmineCommand { Id = 1 };
+            var handler = new DeleteVererohuMootmineCommandHandler(DbContext);
+
+            var mootmine = new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            await DbContext.VererohuMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.VererohuMootmised.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
+        }
+
+        [Fact]
+        public async Task Delete_should_not_fail_when_vererohu_mootmine_does_not_exists()
+        {
+            var query = new DeleteVererohuMootmineCommand { Id = 101 };
+            var handler = new DeleteVererohuMootmineCommandHandler(DbContext);
+
+            var mootmine = new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            await DbContext.VererohuMootmised.AddAsync(mootmine);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.VererohuMootmised.FindAsync(query.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
         }
     }
 }

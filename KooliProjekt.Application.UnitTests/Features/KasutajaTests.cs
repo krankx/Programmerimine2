@@ -97,6 +97,10 @@ namespace KooliProjekt.Application.UnitTests.Features
             var query = new GetKasutajaQuery { Id = id };
             var handler = new GetKasutajaQueryHandler(repo);
 
+            var kasutaja = new Kasutaja { Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
+            await DbContext.Kasutajad.AddAsync(kasutaja);
+            await DbContext.SaveChangesAsync();
+
             // Act
             var result = await handler.Handle(query, CancellationToken.None);
 
@@ -201,6 +205,99 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        // ===== DELETE TESTS =====
+
+        [Fact]
+        public void Delete_should_throw_when_dbcontext_is_null()
+        {
+            var dbContext = (ApplicationDbContext)null;
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                new DeleteKasutajaCommandHandler(dbContext);
+            });
+
+            Assert.Equal(nameof(dbContext), exception.ParamName);
+        }
+
+        [Fact]
+        public async Task Delete_should_throw_when_request_is_null()
+        {
+            // Arrange
+            var request = (DeleteKasutajaCommand)null;
+            var handler = new DeleteKasutajaCommandHandler(DbContext);
+
+            // Act && Assert
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task Delete_should_return_when_request_id_is_null_or_negative(int id)
+        {
+            // Arrange
+            var query = new DeleteKasutajaCommand { Id = id };
+            var faultyDbContext = GetFaultyDbContext();
+            var handler = new DeleteKasutajaCommandHandler(faultyDbContext);
+
+            var kasutaja = new Kasutaja { Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
+            await DbContext.Kasutajad.AddAsync(kasutaja);
+            await DbContext.SaveChangesAsync();
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Delete_should_remove_existing_kasutaja()
+        {
+            // Arrange
+            var query = new DeleteKasutajaCommand { Id = 1 };
+            var handler = new DeleteKasutajaCommandHandler(DbContext);
+
+            var kasutaja = new Kasutaja { Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
+            await DbContext.Kasutajad.AddAsync(kasutaja);
+            await DbContext.SaveChangesAsync();
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.Kasutajad.FindAsync(query.Id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
+        }
+
+        [Fact]
+        public async Task Delete_should_not_fail_when_kasutaja_does_not_exists()
+        {
+            // Arrange
+            var query = new DeleteKasutajaCommand { Id = 101 };
+            var handler = new DeleteKasutajaCommandHandler(DbContext);
+
+            var kasutaja = new Kasutaja { Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
+            await DbContext.Kasutajad.AddAsync(kasutaja);
+            await DbContext.SaveChangesAsync();
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+            var test = await DbContext.Kasutajad.FindAsync(query.Id);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.Null(test);
         }
     }
 }
