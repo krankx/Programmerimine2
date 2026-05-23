@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.Soogikorrad;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -266,6 +268,124 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SaveSoogikordCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SaveSoogikordCommand)null;
+            var repo = new SoogikordRepository(DbContext);
+            var handler = new SaveSoogikordCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SaveSoogikordCommand { Id = -10 };
+            var repo = new SoogikordRepository(GetFaultyDbContext());
+            var handler = new SaveSoogikordCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_soogikord()
+        {
+            var request = new SaveSoogikordCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 };
+            var repo = new SoogikordRepository(DbContext);
+            var handler = new SaveSoogikordCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Soogikorrad.SingleOrDefaultAsync(s => s.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_soogikord()
+        {
+            var existing = new Soogikord { Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 };
+            await DbContext.Soogikorrad.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SaveSoogikordCommand { Id = existing.Id, Kuupaev = new DateTime(2025, 10, 2), Tyyp = SoogikorraTyyp.Louna, PatsientId = 1 };
+            var repo = new SoogikordRepository(DbContext);
+            var handler = new SaveSoogikordCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Soogikorrad.SingleOrDefaultAsync(s => s.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Tyyp, saved.Tyyp);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_soogikord()
+        {
+            var request = new SaveSoogikordCommand { Id = 999, Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 };
+            var repo = new SoogikordRepository(DbContext);
+            var handler = new SaveSoogikordCommandHandler(repo);
+
+            var existing = new Soogikord { Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 };
+            await DbContext.Soogikorrad.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_patsient_id_is_invalid(int patsientId)
+        {
+            var validator = new SaveSoogikordCommandValidator();
+            var command = new SaveSoogikordCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = patsientId };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveSoogikordCommand.PatsientId), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SaveSoogikordCommandValidator();
+            var command = new SaveSoogikordCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

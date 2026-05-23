@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
@@ -13,17 +14,38 @@ namespace KooliProjekt.Application.Features.Kasutajad
 
         public SaveKasutajaCommandHandler(IKasutajaRepository kasutajaRepository)
         {
+            if (kasutajaRepository == null)
+            {
+                throw new ArgumentNullException(nameof(kasutajaRepository));
+            }
+
             _kasutajaRepository = kasutajaRepository;
         }
 
         public async Task<OperationResult> Handle(SaveKasutajaCommand request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult();
+
+            if (request.Id < 0)
+            {
+                result.AddError("Request ID cannot be negative");
+                return result;
+            }
 
             var kasutaja = new Kasutaja();
             if (request.Id != 0)
             {
                 kasutaja = await _kasutajaRepository.GetByIdAsync(request.Id);
+                if (kasutaja == null)
+                {
+                    result.AddError("Cannot find kasutaja with ID " + request.Id);
+                    return result;
+                }
             }
 
             kasutaja.Eesnimi = request.Eesnimi;

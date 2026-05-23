@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.Kasutajad;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -298,6 +300,169 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SaveKasutajaCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SaveKasutajaCommand)null;
+            var repo = new KasutajaRepository(DbContext);
+            var handler = new SaveKasutajaCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SaveKasutajaCommand { Id = -10 };
+            var repo = new KasutajaRepository(GetFaultyDbContext());
+            var handler = new SaveKasutajaCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_kasutaja()
+        {
+            var request = new SaveKasutajaCommand { Id = 0, Eesnimi = "Uus", Perekonnanimi = "Kasutaja", Email = "uus@tervis.ee", Parool = "parool" };
+            var repo = new KasutajaRepository(DbContext);
+            var handler = new SaveKasutajaCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Kasutajad.SingleOrDefaultAsync(k => k.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_kasutaja()
+        {
+            var existing = new Kasutaja { Eesnimi = "Vana", Perekonnanimi = "Kasutaja", Email = "vana@tervis.ee", Parool = "vanaparool" };
+            await DbContext.Kasutajad.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SaveKasutajaCommand { Id = existing.Id, Eesnimi = "Uuendatud", Perekonnanimi = "Kasutaja", Email = "uue@tervis.ee", Parool = "uusparool" };
+            var repo = new KasutajaRepository(DbContext);
+            var handler = new SaveKasutajaCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Kasutajad.SingleOrDefaultAsync(k => k.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Eesnimi, saved.Eesnimi);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_kasutaja()
+        {
+            var request = new SaveKasutajaCommand { Id = 999, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
+            var repo = new KasutajaRepository(DbContext);
+            var handler = new SaveKasutajaCommandHandler(repo);
+
+            var existing = new Kasutaja { Eesnimi = "Vana", Perekonnanimi = "Kasutaja", Email = "vana@tervis.ee", Parool = "vanaparool" };
+            await DbContext.Kasutajad.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("01234567890123456789012345678901234567890123456789000")]
+        public void SaveValidator_should_return_false_when_eesnimi_is_invalid(string eesnimi)
+        {
+            var validator = new SaveKasutajaCommandValidator();
+            var command = new SaveKasutajaCommand { Id = 0, Eesnimi = eesnimi, Perekonnanimi = "Test", Email = "test@tervis.ee", Parool = "parool" };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveKasutajaCommand.Eesnimi), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("01234567890123456789012345678901234567890123456789000")]
+        public void SaveValidator_should_return_false_when_perekonnanimi_is_invalid(string perekonnanimi)
+        {
+            var validator = new SaveKasutajaCommandValidator();
+            var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = perekonnanimi, Email = "test@tervis.ee", Parool = "parool" };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveKasutajaCommand.Perekonnanimi), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        public void SaveValidator_should_return_false_when_email_is_invalid(string email)
+        {
+            var validator = new SaveKasutajaCommandValidator();
+            var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = email, Parool = "parool" };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveKasutajaCommand.Email), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("01234567890123456789012345678901234567890123456789000")]
+        public void SaveValidator_should_return_false_when_parool_is_invalid(string parool)
+        {
+            var validator = new SaveKasutajaCommandValidator();
+            var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = parool };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveKasutajaCommand.Parool), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SaveKasutajaCommandValidator();
+            var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

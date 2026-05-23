@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
@@ -13,17 +14,38 @@ namespace KooliProjekt.Application.Features.Toiduained
 
         public SaveToiduaineCommandHandler(IToiduaineRepository toiduaineRepository)
         {
+            if (toiduaineRepository == null)
+            {
+                throw new ArgumentNullException(nameof(toiduaineRepository));
+            }
+
             _toiduaineRepository = toiduaineRepository;
         }
 
         public async Task<OperationResult> Handle(SaveToiduaineCommand request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult();
+
+            if (request.Id < 0)
+            {
+                result.AddError("Request ID cannot be negative");
+                return result;
+            }
 
             var toiduaine = new Toiduaine();
             if (request.Id != 0)
             {
                 toiduaine = await _toiduaineRepository.GetByIdAsync(request.Id);
+                if (toiduaine == null)
+                {
+                    result.AddError("Cannot find toiduaine with ID " + request.Id);
+                    return result;
+                }
             }
 
             toiduaine.Nimetus = request.Nimetus;

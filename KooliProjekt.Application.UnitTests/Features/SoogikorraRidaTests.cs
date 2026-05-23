@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.SoogikorraRead;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -262,6 +264,153 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SaveSoogikorraRidaCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SaveSoogikorraRidaCommand)null;
+            var repo = new SoogikorraRidaRepository(DbContext);
+            var handler = new SaveSoogikorraRidaCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SaveSoogikorraRidaCommand { Id = -10 };
+            var repo = new SoogikorraRidaRepository(GetFaultyDbContext());
+            var handler = new SaveSoogikorraRidaCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_soogikorra_rida()
+        {
+            var request = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            var repo = new SoogikorraRidaRepository(DbContext);
+            var handler = new SaveSoogikorraRidaCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.SoogikorraRead.SingleOrDefaultAsync(r => r.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_soogikorra_rida()
+        {
+            var existing = new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            await DbContext.SoogikorraRead.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SaveSoogikorraRidaCommand { Id = existing.Id, Kogus = 200, SoogikordId = 1, ToiduaineId = 2 };
+            var repo = new SoogikorraRidaRepository(DbContext);
+            var handler = new SaveSoogikorraRidaCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.SoogikorraRead.SingleOrDefaultAsync(r => r.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Kogus, saved.Kogus);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_soogikorra_rida()
+        {
+            var request = new SaveSoogikorraRidaCommand { Id = 999, Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            var repo = new SoogikorraRidaRepository(DbContext);
+            var handler = new SaveSoogikorraRidaCommandHandler(repo);
+
+            var existing = new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+            await DbContext.SoogikorraRead.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(-100)]
+        public void SaveValidator_should_return_false_when_kogus_is_invalid(decimal kogus)
+        {
+            var validator = new SaveSoogikorraRidaCommandValidator();
+            var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = kogus, SoogikordId = 1, ToiduaineId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveSoogikorraRidaCommand.Kogus), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_soogikord_id_is_invalid(int soogikordId)
+        {
+            var validator = new SaveSoogikorraRidaCommandValidator();
+            var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = soogikordId, ToiduaineId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveSoogikorraRidaCommand.SoogikordId), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_toiduaine_id_is_invalid(int toiduaineId)
+        {
+            var validator = new SaveSoogikorraRidaCommandValidator();
+            var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = 1, ToiduaineId = toiduaineId };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveSoogikorraRidaCommand.ToiduaineId), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SaveSoogikorraRidaCommandValidator();
+            var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

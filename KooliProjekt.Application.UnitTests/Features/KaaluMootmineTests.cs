@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.KaaluMootmised;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -262,6 +264,139 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SaveKaaluMootmineCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SaveKaaluMootmineCommand)null;
+            var repo = new KaaluMootmineRepository(DbContext);
+            var handler = new SaveKaaluMootmineCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SaveKaaluMootmineCommand { Id = -10 };
+            var repo = new KaaluMootmineRepository(GetFaultyDbContext());
+            var handler = new SaveKaaluMootmineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_kaalu_mootmine()
+        {
+            var request = new SaveKaaluMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            var repo = new KaaluMootmineRepository(DbContext);
+            var handler = new SaveKaaluMootmineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.KaaluMootmised.SingleOrDefaultAsync(m => m.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_kaalu_mootmine()
+        {
+            var existing = new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            await DbContext.KaaluMootmised.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SaveKaaluMootmineCommand { Id = existing.Id, Kuupaev = new DateTime(2025, 10, 2), Kaal = 80m, PatsientId = 1 };
+            var repo = new KaaluMootmineRepository(DbContext);
+            var handler = new SaveKaaluMootmineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.KaaluMootmised.SingleOrDefaultAsync(m => m.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Kaal, saved.Kaal);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_kaalu_mootmine()
+        {
+            var request = new SaveKaaluMootmineCommand { Id = 999, Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            var repo = new KaaluMootmineRepository(DbContext);
+            var handler = new SaveKaaluMootmineCommandHandler(repo);
+
+            var existing = new KaaluMootmine { Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+            await DbContext.KaaluMootmised.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(-100)]
+        public void SaveValidator_should_return_false_when_kaal_is_invalid(decimal kaal)
+        {
+            var validator = new SaveKaaluMootmineCommandValidator();
+            var command = new SaveKaaluMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kaal = kaal, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveKaaluMootmineCommand.Kaal), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_patsient_id_is_invalid(int patsientId)
+        {
+            var validator = new SaveKaaluMootmineCommandValidator();
+            var command = new SaveKaaluMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = patsientId };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveKaaluMootmineCommand.PatsientId), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SaveKaaluMootmineCommandValidator();
+            var command = new SaveKaaluMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kaal = 75.5m, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.Patsiendid;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -269,6 +271,170 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SavePatsientCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SavePatsientCommand)null;
+            var repo = new PatsientRepository(DbContext);
+            var handler = new SavePatsientCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SavePatsientCommand { Id = -10 };
+            var repo = new PatsientRepository(GetFaultyDbContext());
+            var handler = new SavePatsientCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_patsient()
+        {
+            var request = new SavePatsientCommand { Id = 0, Eesnimi = "Uus", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            var repo = new PatsientRepository(DbContext);
+            var handler = new SavePatsientCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Patsiendid.SingleOrDefaultAsync(p => p.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_patsient()
+        {
+            var existing = new Patsient { Eesnimi = "Vana", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            await DbContext.Patsiendid.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SavePatsientCommand { Id = existing.Id, Eesnimi = "Uuendatud", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            var repo = new PatsientRepository(DbContext);
+            var handler = new SavePatsientCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Patsiendid.SingleOrDefaultAsync(p => p.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Eesnimi, saved.Eesnimi);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_patsient()
+        {
+            var request = new SavePatsientCommand { Id = 999, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            var repo = new PatsientRepository(DbContext);
+            var handler = new SavePatsientCommandHandler(repo);
+
+            var existing = new Patsient { Eesnimi = "Vana", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+            await DbContext.Patsiendid.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("01234567890123456789012345678901234567890123456789000")]
+        public void SaveValidator_should_return_false_when_eesnimi_is_invalid(string eesnimi)
+        {
+            var validator = new SavePatsientCommandValidator();
+            var command = new SavePatsientCommand { Id = 0, Eesnimi = eesnimi, Perekonnanimi = "Test", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SavePatsientCommand.Eesnimi), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("01234567890123456789012345678901234567890123456789000")]
+        public void SaveValidator_should_return_false_when_perekonnanimi_is_invalid(string perekonnanimi)
+        {
+            var validator = new SavePatsientCommandValidator();
+            var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = perekonnanimi, Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SavePatsientCommand.Perekonnanimi), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("1234567890")]
+        [InlineData("123456789012")]
+        public void SaveValidator_should_return_false_when_isikukood_is_invalid(string isikukood)
+        {
+            var validator = new SavePatsientCommandValidator();
+            var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = isikukood, Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SavePatsientCommand.Isikukood), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_kasutaja_id_is_invalid(int kasutajaId)
+        {
+            var validator = new SavePatsientCommandValidator();
+            var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = kasutajaId };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SavePatsientCommand.KasutajaId), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SavePatsientCommandValidator();
+            var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

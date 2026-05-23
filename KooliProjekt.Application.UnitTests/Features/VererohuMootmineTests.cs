@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.VererohuMootmised;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -271,6 +273,166 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SaveVererohuMootmineCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SaveVererohuMootmineCommand)null;
+            var repo = new VererohuMootmineRepository(DbContext);
+            var handler = new SaveVererohuMootmineCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SaveVererohuMootmineCommand { Id = -10 };
+            var repo = new VererohuMootmineRepository(GetFaultyDbContext());
+            var handler = new SaveVererohuMootmineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_vererohu_mootmine()
+        {
+            var request = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            var repo = new VererohuMootmineRepository(DbContext);
+            var handler = new SaveVererohuMootmineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.VererohuMootmised.SingleOrDefaultAsync(m => m.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_vererohu_mootmine()
+        {
+            var existing = new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            await DbContext.VererohuMootmised.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SaveVererohuMootmineCommand { Id = existing.Id, Kuupaev = new DateTime(2025, 10, 2), Kellaaeg = new TimeSpan(10, 0, 0), Sustoolne = 130, Diastoolne = 85, Pulss = 75, PatsientId = 1 };
+            var repo = new VererohuMootmineRepository(DbContext);
+            var handler = new SaveVererohuMootmineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.VererohuMootmised.SingleOrDefaultAsync(m => m.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Sustoolne, saved.Sustoolne);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_vererohu_mootmine()
+        {
+            var request = new SaveVererohuMootmineCommand { Id = 999, Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            var repo = new VererohuMootmineRepository(DbContext);
+            var handler = new SaveVererohuMootmineCommandHandler(repo);
+
+            var existing = new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+            await DbContext.VererohuMootmised.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_sustoolne_is_invalid(int sustoolne)
+        {
+            var validator = new SaveVererohuMootmineCommandValidator();
+            var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = sustoolne, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveVererohuMootmineCommand.Sustoolne), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_diastoolne_is_invalid(int diastoolne)
+        {
+            var validator = new SaveVererohuMootmineCommandValidator();
+            var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = 120, Diastoolne = diastoolne, Pulss = 72, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveVererohuMootmineCommand.Diastoolne), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_pulss_is_invalid(int pulss)
+        {
+            var validator = new SaveVererohuMootmineCommandValidator();
+            var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = 120, Diastoolne = 80, Pulss = pulss, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveVererohuMootmineCommand.Pulss), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void SaveValidator_should_return_false_when_patsient_id_is_invalid(int patsientId)
+        {
+            var validator = new SaveVererohuMootmineCommandValidator();
+            var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = patsientId };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveVererohuMootmineCommand.PatsientId), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SaveVererohuMootmineCommandValidator();
+            var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

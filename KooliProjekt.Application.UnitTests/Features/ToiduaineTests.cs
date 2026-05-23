@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
 using KooliProjekt.Application.Data.Repositories;
 using KooliProjekt.Application.Features.Toiduained;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Xunit;
 
 namespace KooliProjekt.Application.UnitTests.Features
@@ -280,6 +282,138 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.NotNull(result);
             Assert.False(result.HasErrors);
             Assert.Null(test);
+        }
+
+        // ===== SAVE HANDLER TESTS =====
+
+        [Fact]
+        public void Save_should_throw_when_repository_is_null()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+            {
+                new SaveToiduaineCommandHandler(null);
+            });
+        }
+
+        [Fact]
+        public async Task Save_should_throw_when_request_is_null()
+        {
+            var request = (SaveToiduaineCommand)null;
+            var repo = new ToiduaineRepository(DbContext);
+            var handler = new SaveToiduaineCommandHandler(repo);
+
+            var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            {
+                await handler.Handle(request, CancellationToken.None);
+            });
+            Assert.Equal("request", ex.ParamName);
+        }
+
+        [Fact]
+        public async Task Save_should_return_if_id_is_negative()
+        {
+            var request = new SaveToiduaineCommand { Id = -10 };
+            var repo = new ToiduaineRepository(GetFaultyDbContext());
+            var handler = new SaveToiduaineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        [Fact]
+        public async Task Save_should_add_new_toiduaine()
+        {
+            var request = new SaveToiduaineCommand { Id = 0, Nimetus = "Leib", Energia = 250, Valgud = 8.5m, Susivesikud = 50, MillestSuhkrud = 3, Rasvad = 2, MillestKullastunud = 0.5m, Kiudained = 6, Sool = 1.2m };
+            var repo = new ToiduaineRepository(DbContext);
+            var handler = new SaveToiduaineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Toiduained.SingleOrDefaultAsync(t => t.Id == 1);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(1, saved.Id);
+        }
+
+        [Fact]
+        public async Task Save_should_update_existing_toiduaine()
+        {
+            var existing = new Toiduaine { Nimetus = "Leib", Energia = 250, Valgud = 8.5m, Susivesikud = 50, MillestSuhkrud = 3, Rasvad = 2, MillestKullastunud = 0.5m, Kiudained = 6, Sool = 1.2m };
+            await DbContext.Toiduained.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var request = new SaveToiduaineCommand { Id = existing.Id, Nimetus = "Sai", Energia = 300, Valgud = 9m, Susivesikud = 55, MillestSuhkrud = 5, Rasvad = 3, MillestKullastunud = 0.8m, Kiudained = 4, Sool = 1m };
+            var repo = new ToiduaineRepository(DbContext);
+            var handler = new SaveToiduaineCommandHandler(repo);
+
+            var result = await handler.Handle(request, CancellationToken.None);
+            var saved = await DbContext.Toiduained.SingleOrDefaultAsync(t => t.Id == request.Id);
+
+            Assert.NotNull(result);
+            Assert.False(result.HasErrors);
+            Assert.NotNull(saved);
+            Assert.Equal(request.Nimetus, saved.Nimetus);
+        }
+
+        [Fact]
+        public async Task Save_should_not_update_missing_toiduaine()
+        {
+            var request = new SaveToiduaineCommand { Id = 999, Nimetus = "Leib", Energia = 250 };
+            var repo = new ToiduaineRepository(DbContext);
+            var handler = new SaveToiduaineCommandHandler(repo);
+
+            var existing = new Toiduaine { Nimetus = "Sai", Energia = 300, Valgud = 9m, Susivesikud = 55, MillestSuhkrud = 5, Rasvad = 3, MillestKullastunud = 0.8m, Kiudained = 4, Sool = 1m };
+            await DbContext.Toiduained.AddAsync(existing);
+            await DbContext.SaveChangesAsync();
+
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            Assert.NotNull(result);
+            Assert.True(result.HasErrors);
+        }
+
+        // ===== VALIDATOR TESTS =====
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        public void SaveValidator_should_return_false_when_nimetus_is_invalid(string nimetus)
+        {
+            var validator = new SaveToiduaineCommandValidator();
+            var command = new SaveToiduaineCommand { Id = 0, Nimetus = nimetus, Energia = 250 };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveToiduaineCommand.Nimetus), result.Errors.First().PropertyName);
+        }
+
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(-100)]
+        public void SaveValidator_should_return_false_when_energia_is_invalid(decimal energia)
+        {
+            var validator = new SaveToiduaineCommandValidator();
+            var command = new SaveToiduaineCommand { Id = 0, Nimetus = "Leib", Energia = energia };
+
+            var result = validator.Validate(command);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(nameof(SaveToiduaineCommand.Energia), result.Errors.First().PropertyName);
+        }
+
+        [Fact]
+        public void SaveValidator_should_return_true_when_command_is_valid()
+        {
+            var validator = new SaveToiduaineCommandValidator();
+            var command = new SaveToiduaineCommand { Id = 0, Nimetus = "Leib", Energia = 250, Valgud = 8.5m, Susivesikud = 50, MillestSuhkrud = 3, Rasvad = 2, MillestKullastunud = 0.5m, Kiudained = 6, Sool = 1.2m };
+
+            var result = validator.Validate(command);
+
+            Assert.True(result.IsValid);
         }
     }
 }

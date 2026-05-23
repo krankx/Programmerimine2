@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
@@ -13,17 +14,38 @@ namespace KooliProjekt.Application.Features.VererohuMootmised
 
         public SaveVererohuMootmineCommandHandler(IVererohuMootmineRepository vererohuMootmineRepository)
         {
+            if (vererohuMootmineRepository == null)
+            {
+                throw new ArgumentNullException(nameof(vererohuMootmineRepository));
+            }
+
             _vererohuMootmineRepository = vererohuMootmineRepository;
         }
 
         public async Task<OperationResult> Handle(SaveVererohuMootmineCommand request, CancellationToken cancellationToken)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var result = new OperationResult();
+
+            if (request.Id < 0)
+            {
+                result.AddError("Request ID cannot be negative");
+                return result;
+            }
 
             var mootmine = new VererohuMootmine();
             if (request.Id != 0)
             {
                 mootmine = await _vererohuMootmineRepository.GetByIdAsync(request.Id);
+                if (mootmine == null)
+                {
+                    result.AddError("Cannot find vererohu mootmine with ID " + request.Id);
+                    return result;
+                }
             }
 
             mootmine.Kuupaev = request.Kuupaev;
