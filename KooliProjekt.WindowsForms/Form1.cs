@@ -1,10 +1,97 @@
+using System.ComponentModel;
 using KooliProjekt.WindowsForms.Api;
 
 namespace KooliProjekt.WindowsForms
 {
-    public partial class Form1 : Form
+    public partial class Form1 : Form, IMainView
     {
         private readonly IApiClient _apiClient;
+        private MainViewPresenter _mainViewPresenter;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public IList<Toiduaine> DataSource
+        {
+            get { return (IList<Toiduaine>)dataGridView1.DataSource; }
+            set { dataGridView1.DataSource = value; }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Toiduaine SelectedItem { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public int CurrentId
+        {
+            get { return int.Parse(idField.Text); }
+            set { idField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public string CurrentNimetus
+        {
+            get { return nimetusField.Text; }
+            set { nimetusField.Text = value; }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentEnergia
+        {
+            get { return decimal.Parse(energiaField.Text); }
+            set { energiaField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentValgud
+        {
+            get { return decimal.Parse(valgudField.Text); }
+            set { valgudField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentSusivesikud
+        {
+            get { return decimal.Parse(susivesikudField.Text); }
+            set { susivesikudField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentMillestSuhkrud
+        {
+            get { return decimal.Parse(millestSuhkrudField.Text); }
+            set { millestSuhkrudField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentRasvad
+        {
+            get { return decimal.Parse(rasvadField.Text); }
+            set { rasvadField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentMillestKullastunud
+        {
+            get { return decimal.Parse(millestKullastunudField.Text); }
+            set { millestKullastunudField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentKiudained
+        {
+            get { return decimal.Parse(kiudainedField.Text); }
+            set { kiudainedField.Text = value.ToString(); }
+        }
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public decimal CurrentSool
+        {
+            get { return decimal.Parse(soolField.Text); }
+            set { soolField.Text = value.ToString(); }
+        }
+
+        public void SetPresenter(MainViewPresenter presenter)
+        {
+            _mainViewPresenter = presenter;
+        }
 
         public Form1(IApiClient apiClient)
         {
@@ -34,7 +121,7 @@ namespace KooliProjekt.WindowsForms
                 ShowError("Viga kustutamisel", result);
             }
 
-            await LoadToiduained();
+            await _mainViewPresenter.LoadData();
         }
 
         private void AddCommand_Click(object sender, EventArgs e)
@@ -70,12 +157,13 @@ namespace KooliProjekt.WindowsForms
             {
                 ShowError("Viga salvestamisel", result);
             }
-            await LoadToiduained();
+
+            await _mainViewPresenter.LoadData();
         }
 
         // Koosta etteantud veateatest ja OperationResult sees olevatest vigadest
         // veateade ja näita seda kasutajale
-        private void ShowError(string message, OperationResult result)
+        public void ShowError(string message, OperationResult result)
         {
             var error = message + "\r\n";
             var apiErrors = "";
@@ -116,43 +204,17 @@ namespace KooliProjekt.WindowsForms
         {
             if (dataGridView1.CurrentRow == null)
             {
+                _mainViewPresenter.SetSelection(null);
                 return;
             }
 
             var selected = (Toiduaine)dataGridView1.CurrentRow.DataBoundItem;
-            if (selected == null)
-            {
-                return;
-            }
-
-            idField.Text = selected.Id.ToString();
-            nimetusField.Text = selected.Nimetus;
-            energiaField.Text = selected.Energia.ToString();
-            valgudField.Text = selected.Valgud.ToString();
-            susivesikudField.Text = selected.Susivesikud.ToString();
-            millestSuhkrudField.Text = selected.MillestSuhkrud.ToString();
-            rasvadField.Text = selected.Rasvad.ToString();
-            millestKullastunudField.Text = selected.MillestKullastunud.ToString();
-            kiudainedField.Text = selected.Kiudained.ToString();
-            soolField.Text = selected.Sool.ToString();
+            _mainViewPresenter.SetSelection(selected);
         }
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            await LoadToiduained();
-        }
-
-        private async Task LoadToiduained()
-        {
-            var response = await _apiClient.List(1, 100);
-            if (response.HasErrors)
-            {
-                ShowError("Viga andmete laadimisel", response);
-                dataGridView1.DataSource = null;
-                return;
-            }
-
-            dataGridView1.DataSource = response.Value.Results;
+            await _mainViewPresenter.LoadData();
         }
     }
 }
