@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using KooliProjekt.Application.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -11,8 +11,8 @@ namespace KooliProjekt.IntegrationTests.Helpers
     {
         private ApplicationDbContext _dbContext;
 
-        public WebApplicationFactory<FakeStartup> Factory { get; }
-        public HttpClient Client { get; }
+        public WebApplicationFactory<FakeStartup> Factory { get; private set; }
+        public HttpClient Client { get; private set; }
 
         public TestBase()
         {
@@ -39,6 +39,18 @@ namespace KooliProjekt.IntegrationTests.Helpers
             using var scope = Factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             dbContext.Database.EnsureDeleted();
+
+            if (Factory != null)
+            {
+                Factory.Dispose();
+                Factory = null;
+            }
+
+            if (Client != null)
+            {
+                Client.Dispose();
+                Client = null;
+            }
         }
 
         // Add your other helper methods here
