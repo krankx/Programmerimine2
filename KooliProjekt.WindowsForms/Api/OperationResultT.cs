@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace KooliProjekt.WindowsForms.Api
+namespace KooliProjekt.WindowsForms
 {
     [ExcludeFromCodeCoverage]
     public class OperationResult<T> : OperationResult
