@@ -1,10 +1,11 @@
 using FluentValidation;
+using KooliProjekt.Application.Data;
 
 namespace KooliProjekt.Application.Features.SoogikorraRead
 {
     public class SaveSoogikorraRidaCommandValidator : AbstractValidator<SaveSoogikorraRidaCommand>
     {
-        public SaveSoogikorraRidaCommandValidator()
+        public SaveSoogikorraRidaCommandValidator(ApplicationDbContext context)
         {
             RuleFor(x => x.Kogus)
                 .GreaterThan(0).WithMessage("Kogus must be greater than zero");

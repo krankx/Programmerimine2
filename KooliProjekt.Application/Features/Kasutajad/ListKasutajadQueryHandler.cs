@@ -43,8 +43,25 @@ namespace KooliProjekt.Application.Features.Kasutajad
             }
 
             var result = new OperationResult<PagedResult<Kasutaja>>();
-            result.Value = await _dbContext
-                .Kasutajad
+
+            var query = _dbContext.Kasutajad.AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.Eesnimi))
+            {
+                query = query.Where(k => k.Eesnimi.Contains(request.Eesnimi));
+            }
+
+            if (!string.IsNullOrEmpty(request.Perekonnanimi))
+            {
+                query = query.Where(k => k.Perekonnanimi.Contains(request.Perekonnanimi));
+            }
+
+            if (!string.IsNullOrEmpty(request.Email))
+            {
+                query = query.Where(k => k.Email.Contains(request.Email));
+            }
+
+            result.Value = await query
                 .OrderBy(k => k.Perekonnanimi)
                 .GetPagedAsync(request.Page, request.PageSize);
 

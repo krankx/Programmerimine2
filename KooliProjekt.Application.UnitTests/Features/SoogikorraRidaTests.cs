@@ -184,6 +184,31 @@ namespace KooliProjekt.Application.UnitTests.Features
             });
         }
 
+        [Fact]
+        public async Task List_should_filter_by_search_parameters()
+        {
+            // Arrange
+            await DbContext.SoogikorraRead.AddAsync(new SoogikorraRida { Kogus = 100, SoogikordId = 1, ToiduaineId = 1 });
+            await DbContext.SoogikorraRead.AddAsync(new SoogikorraRida { Kogus = 200, SoogikordId = 2, ToiduaineId = 2 });
+            await DbContext.SaveChangesAsync();
+
+            var handler = new ListSoogikorraReadQueryHandler(DbContext);
+            var query = new ListSoogikorraReadQuery
+            {
+                Page = 1,
+                PageSize = 10,
+                SoogikordId = 1,
+                ToiduaineId = 1
+            };
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.False(result.HasErrors);
+            Assert.Equal(1, result.Value.RowCount);
+        }
+
         // ===== DELETE TESTS =====
 
         [Fact]
@@ -365,7 +390,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-100)]
         public void SaveValidator_should_return_false_when_kogus_is_invalid(decimal kogus)
         {
-            var validator = new SaveSoogikorraRidaCommandValidator();
+            var validator = new SaveSoogikorraRidaCommandValidator(DbContext);
             var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = kogus, SoogikordId = 1, ToiduaineId = 1 };
 
             var result = validator.Validate(command);
@@ -379,7 +404,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_soogikord_id_is_invalid(int soogikordId)
         {
-            var validator = new SaveSoogikorraRidaCommandValidator();
+            var validator = new SaveSoogikorraRidaCommandValidator(DbContext);
             var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = soogikordId, ToiduaineId = 1 };
 
             var result = validator.Validate(command);
@@ -393,7 +418,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_toiduaine_id_is_invalid(int toiduaineId)
         {
-            var validator = new SaveSoogikorraRidaCommandValidator();
+            var validator = new SaveSoogikorraRidaCommandValidator(DbContext);
             var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = 1, ToiduaineId = toiduaineId };
 
             var result = validator.Validate(command);
@@ -405,7 +430,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [Fact]
         public void SaveValidator_should_return_true_when_command_is_valid()
         {
-            var validator = new SaveSoogikorraRidaCommandValidator();
+            var validator = new SaveSoogikorraRidaCommandValidator(DbContext);
             var command = new SaveSoogikorraRidaCommand { Id = 0, Kogus = 100, SoogikordId = 1, ToiduaineId = 1 };
 
             var result = validator.Validate(command);

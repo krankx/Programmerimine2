@@ -43,8 +43,25 @@ namespace KooliProjekt.Application.Features.Toiduained
             }
 
             var result = new OperationResult<PagedResult<Toiduaine>>();
-            result.Value = await _dbContext
-                .Toiduained
+
+            var query = _dbContext.Toiduained.AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.Nimetus))
+            {
+                query = query.Where(t => t.Nimetus.Contains(request.Nimetus));
+            }
+
+            if (request.EnergiaMin.HasValue)
+            {
+                query = query.Where(t => t.Energia >= request.EnergiaMin.Value);
+            }
+
+            if (request.EnergiaMax.HasValue)
+            {
+                query = query.Where(t => t.Energia <= request.EnergiaMax.Value);
+            }
+
+            result.Value = await query
                 .OrderBy(t => t.Nimetus)
                 .GetPagedAsync(request.Page, request.PageSize);
 

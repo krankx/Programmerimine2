@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace KooliProjekt.Application.Data.Repositories
 {
+    [ExcludeFromCodeCoverage]
     public abstract class BaseRepository<T> where T : Entity
     {
         protected ApplicationDbContext DbContext { get; private set; }

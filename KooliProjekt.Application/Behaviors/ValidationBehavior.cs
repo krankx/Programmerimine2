@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +9,8 @@ using MediatR;
 
 namespace KooliProjekt.Application.Behaviors
 {
-    public class ValidationBehavior<TRequest, TResponse> : 
+    [ExcludeFromCodeCoverage]
+    public class ValidationBehavior<TRequest, TResponse> :
         IPipelineBehavior<TRequest, TResponse> where TResponse : OperationResult, new()
     {
         private readonly IEnumerable<IValidator<TRequest>> _validators;

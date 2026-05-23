@@ -1,10 +1,11 @@
 using FluentValidation;
+using KooliProjekt.Application.Data;
 
 namespace KooliProjekt.Application.Features.Patsiendid
 {
     public class SavePatsientCommandValidator : AbstractValidator<SavePatsientCommand>
     {
-        public SavePatsientCommandValidator()
+        public SavePatsientCommandValidator(ApplicationDbContext context)
         {
             RuleFor(x => x.Eesnimi)
                 .NotEmpty().WithMessage("Eesnimi is required")

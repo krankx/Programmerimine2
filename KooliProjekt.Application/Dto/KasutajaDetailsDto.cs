@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KooliProjekt.Application.Dto
 {
+    [ExcludeFromCodeCoverage]
     public class KasutajaDetailsDto
     {
         public int Id { get; set; }

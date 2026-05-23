@@ -1,10 +1,11 @@
 using FluentValidation;
+using KooliProjekt.Application.Data;
 
 namespace KooliProjekt.Application.Features.Toiduained
 {
     public class SaveToiduaineCommandValidator : AbstractValidator<SaveToiduaineCommand>
     {
-        public SaveToiduaineCommandValidator()
+        public SaveToiduaineCommandValidator(ApplicationDbContext context)
         {
             RuleFor(x => x.Nimetus)
                 .NotEmpty().WithMessage("Nimetus is required")

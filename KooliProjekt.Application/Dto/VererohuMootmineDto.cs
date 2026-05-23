@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KooliProjekt.Application.Dto
 {
+    [ExcludeFromCodeCoverage]
     public class VererohuMootmineDto
     {
         public int Id { get; set; }

@@ -190,6 +190,37 @@ namespace KooliProjekt.Application.UnitTests.Features
             });
         }
 
+        [Fact]
+        public async Task List_should_filter_by_search_parameters()
+        {
+            // Arrange
+            var k1 = new Kasutaja { Eesnimi = "K1", Perekonnanimi = "K1", Email = "k1@test.ee", Parool = "p1" };
+            await DbContext.Kasutajad.AddAsync(k1);
+            await DbContext.SaveChangesAsync();
+
+            await DbContext.Patsiendid.AddAsync(new Patsient { Eesnimi = "Mati", Perekonnanimi = "Tamm", Isikukood = "12345678901", Synniaeg = new DateTime(1990,1,1), KasutajaId = k1.Id });
+            await DbContext.Patsiendid.AddAsync(new Patsient { Eesnimi = "Kati", Perekonnanimi = "Kask", Isikukood = "98765432109", Synniaeg = new DateTime(1991,2,2), KasutajaId = k1.Id });
+            await DbContext.SaveChangesAsync();
+
+            var handler = new ListPatsiendidQueryHandler(DbContext);
+            var query = new ListPatsiendidQuery
+            {
+                Page = 1,
+                PageSize = 10,
+                Eesnimi = "Mati",
+                Perekonnanimi = "Tamm",
+                Isikukood = "12345",
+                KasutajaId = k1.Id
+            };
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.False(result.HasErrors);
+            Assert.Equal(1, result.Value.RowCount);
+        }
+
         // ===== DELETE TESTS =====
 
         [Fact]
@@ -372,7 +403,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData("01234567890123456789012345678901234567890123456789000")]
         public void SaveValidator_should_return_false_when_eesnimi_is_invalid(string eesnimi)
         {
-            var validator = new SavePatsientCommandValidator();
+            var validator = new SavePatsientCommandValidator(DbContext);
             var command = new SavePatsientCommand { Id = 0, Eesnimi = eesnimi, Perekonnanimi = "Test", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
 
             var result = validator.Validate(command);
@@ -387,7 +418,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData("01234567890123456789012345678901234567890123456789000")]
         public void SaveValidator_should_return_false_when_perekonnanimi_is_invalid(string perekonnanimi)
         {
-            var validator = new SavePatsientCommandValidator();
+            var validator = new SavePatsientCommandValidator(DbContext);
             var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = perekonnanimi, Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
 
             var result = validator.Validate(command);
@@ -403,7 +434,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData("123456789012")]
         public void SaveValidator_should_return_false_when_isikukood_is_invalid(string isikukood)
         {
-            var validator = new SavePatsientCommandValidator();
+            var validator = new SavePatsientCommandValidator(DbContext);
             var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = isikukood, Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
 
             var result = validator.Validate(command);
@@ -417,7 +448,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_kasutaja_id_is_invalid(int kasutajaId)
         {
-            var validator = new SavePatsientCommandValidator();
+            var validator = new SavePatsientCommandValidator(DbContext);
             var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = kasutajaId };
 
             var result = validator.Validate(command);
@@ -429,7 +460,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [Fact]
         public void SaveValidator_should_return_true_when_command_is_valid()
         {
-            var validator = new SavePatsientCommandValidator();
+            var validator = new SavePatsientCommandValidator(DbContext);
             var command = new SavePatsientCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Patsient", Isikukood = "39001011234", Synniaeg = new DateTime(1990, 1, 1), KasutajaId = 1 };
 
             var result = validator.Validate(command);

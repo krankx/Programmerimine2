@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +34,11 @@ namespace KooliProjekt.Application.UnitTests.Features
                 Eesnimi = "Test",
                 Perekonnanimi = "Kasutaja",
                 Email = "test@tervis.ee",
-                Parool = "parool"
+                Parool = "parool",
+                Patsiendid = new List<Patsient>
+                {
+                    new Patsient { Eesnimi = "P1", Perekonnanimi = "P1", Isikukood = "12345678901", Synniaeg = new DateTime(1990,1,1) }
+                }
             };
             var repo = new KasutajaRepository(DbContext);
             var handler = new GetKasutajaQueryHandler(repo);
@@ -47,6 +52,7 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.False(result.HasErrors);
             Assert.NotNull(result.Value);
             Assert.Equal(1, result.Value.Id);
+            Assert.Single(result.Value.Patsiendid);
         }
 
         [Fact]
@@ -207,6 +213,32 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        [Fact]
+        public async Task List_should_filter_by_search_parameters()
+        {
+            // Arrange
+            await DbContext.Kasutajad.AddAsync(new Kasutaja { Eesnimi = "Mati", Perekonnanimi = "Tamm", Email = "mati@test.ee", Parool = "p1" });
+            await DbContext.Kasutajad.AddAsync(new Kasutaja { Eesnimi = "Kati", Perekonnanimi = "Kask", Email = "kati@test.ee", Parool = "p2" });
+            await DbContext.SaveChangesAsync();
+
+            var handler = new ListKasutajadQueryHandler(DbContext);
+            var query = new ListKasutajadQuery
+            {
+                Page = 1,
+                PageSize = 10,
+                Eesnimi = "Mati",
+                Perekonnanimi = "Tamm",
+                Email = "mati"
+            };
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.False(result.HasErrors);
+            Assert.Equal(1, result.Value.RowCount);
         }
 
         // ===== DELETE TESTS =====
@@ -401,7 +433,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData("01234567890123456789012345678901234567890123456789000")]
         public void SaveValidator_should_return_false_when_eesnimi_is_invalid(string eesnimi)
         {
-            var validator = new SaveKasutajaCommandValidator();
+            var validator = new SaveKasutajaCommandValidator(DbContext);
             var command = new SaveKasutajaCommand { Id = 0, Eesnimi = eesnimi, Perekonnanimi = "Test", Email = "test@tervis.ee", Parool = "parool" };
 
             var result = validator.Validate(command);
@@ -416,7 +448,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData("01234567890123456789012345678901234567890123456789000")]
         public void SaveValidator_should_return_false_when_perekonnanimi_is_invalid(string perekonnanimi)
         {
-            var validator = new SaveKasutajaCommandValidator();
+            var validator = new SaveKasutajaCommandValidator(DbContext);
             var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = perekonnanimi, Email = "test@tervis.ee", Parool = "parool" };
 
             var result = validator.Validate(command);
@@ -430,7 +462,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(null)]
         public void SaveValidator_should_return_false_when_email_is_invalid(string email)
         {
-            var validator = new SaveKasutajaCommandValidator();
+            var validator = new SaveKasutajaCommandValidator(DbContext);
             var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = email, Parool = "parool" };
 
             var result = validator.Validate(command);
@@ -445,7 +477,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData("01234567890123456789012345678901234567890123456789000")]
         public void SaveValidator_should_return_false_when_parool_is_invalid(string parool)
         {
-            var validator = new SaveKasutajaCommandValidator();
+            var validator = new SaveKasutajaCommandValidator(DbContext);
             var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = parool };
 
             var result = validator.Validate(command);
@@ -457,7 +489,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [Fact]
         public void SaveValidator_should_return_true_when_command_is_valid()
         {
-            var validator = new SaveKasutajaCommandValidator();
+            var validator = new SaveKasutajaCommandValidator(DbContext);
             var command = new SaveKasutajaCommand { Id = 0, Eesnimi = "Test", Perekonnanimi = "Kasutaja", Email = "test@tervis.ee", Parool = "parool" };
 
             var result = validator.Validate(command);

@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace KooliProjekt.Application.Data
 {
+    [ExcludeFromCodeCoverage]
     public class SoogikorraRida : Entity
     {
         public decimal Kogus { get; set; } // grammides

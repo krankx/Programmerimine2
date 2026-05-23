@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KooliProjekt.Application.Data
 {
+    [ExcludeFromCodeCoverage]
     public class VeresuhkruMootmine : Entity
     {
         public DateTime Kuupaev { get; set; }

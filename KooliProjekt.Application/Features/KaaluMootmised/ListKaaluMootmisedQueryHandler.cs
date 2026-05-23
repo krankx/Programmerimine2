@@ -43,8 +43,25 @@ namespace KooliProjekt.Application.Features.KaaluMootmised
             }
 
             var result = new OperationResult<PagedResult<KaaluMootmine>>();
-            result.Value = await _dbContext
-                .KaaluMootmised
+
+            var query = _dbContext.KaaluMootmised.AsQueryable();
+
+            if (request.PatsientId.HasValue)
+            {
+                query = query.Where(m => m.PatsientId == request.PatsientId.Value);
+            }
+
+            if (request.KuupaevAlates.HasValue)
+            {
+                query = query.Where(m => m.Kuupaev >= request.KuupaevAlates.Value);
+            }
+
+            if (request.KuupaevKuni.HasValue)
+            {
+                query = query.Where(m => m.Kuupaev <= request.KuupaevKuni.Value);
+            }
+
+            result.Value = await query
                 .OrderByDescending(m => m.Kuupaev)
                 .GetPagedAsync(request.Page, request.PageSize);
 

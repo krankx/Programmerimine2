@@ -43,8 +43,30 @@ namespace KooliProjekt.Application.Features.Patsiendid
             }
 
             var result = new OperationResult<PagedResult<Patsient>>();
-            result.Value = await _dbContext
-                .Patsiendid
+
+            var query = _dbContext.Patsiendid.AsQueryable();
+
+            if (!string.IsNullOrEmpty(request.Eesnimi))
+            {
+                query = query.Where(p => p.Eesnimi.Contains(request.Eesnimi));
+            }
+
+            if (!string.IsNullOrEmpty(request.Perekonnanimi))
+            {
+                query = query.Where(p => p.Perekonnanimi.Contains(request.Perekonnanimi));
+            }
+
+            if (!string.IsNullOrEmpty(request.Isikukood))
+            {
+                query = query.Where(p => p.Isikukood.Contains(request.Isikukood));
+            }
+
+            if (request.KasutajaId.HasValue)
+            {
+                query = query.Where(p => p.KasutajaId == request.KasutajaId.Value);
+            }
+
+            result.Value = await query
                 .OrderBy(p => p.Perekonnanimi)
                 .GetPagedAsync(request.Page, request.PageSize);
 

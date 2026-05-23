@@ -202,6 +202,32 @@ namespace KooliProjekt.Application.UnitTests.Features
             });
         }
 
+        [Fact]
+        public async Task List_should_filter_by_search_parameters()
+        {
+            // Arrange
+            await DbContext.Toiduained.AddAsync(new Toiduaine { Nimetus = "Leib", Energia = 250 });
+            await DbContext.Toiduained.AddAsync(new Toiduaine { Nimetus = "Sai", Energia = 500 });
+            await DbContext.SaveChangesAsync();
+
+            var handler = new ListToiduainedQueryHandler(DbContext);
+            var query = new ListToiduainedQuery
+            {
+                Page = 1,
+                PageSize = 10,
+                Nimetus = "Leib",
+                EnergiaMin = 100,
+                EnergiaMax = 300
+            };
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.False(result.HasErrors);
+            Assert.Equal(1, result.Value.RowCount);
+        }
+
         // ===== DELETE TESTS =====
 
         [Fact]
@@ -382,7 +408,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(null)]
         public void SaveValidator_should_return_false_when_nimetus_is_invalid(string nimetus)
         {
-            var validator = new SaveToiduaineCommandValidator();
+            var validator = new SaveToiduaineCommandValidator(DbContext);
             var command = new SaveToiduaineCommand { Id = 0, Nimetus = nimetus, Energia = 250 };
 
             var result = validator.Validate(command);
@@ -396,7 +422,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-100)]
         public void SaveValidator_should_return_false_when_energia_is_invalid(decimal energia)
         {
-            var validator = new SaveToiduaineCommandValidator();
+            var validator = new SaveToiduaineCommandValidator(DbContext);
             var command = new SaveToiduaineCommand { Id = 0, Nimetus = "Leib", Energia = energia };
 
             var result = validator.Validate(command);
@@ -408,7 +434,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [Fact]
         public void SaveValidator_should_return_true_when_command_is_valid()
         {
-            var validator = new SaveToiduaineCommandValidator();
+            var validator = new SaveToiduaineCommandValidator(DbContext);
             var command = new SaveToiduaineCommand { Id = 0, Nimetus = "Leib", Energia = 250, Valgud = 8.5m, Susivesikud = 50, MillestSuhkrud = 3, Rasvad = 2, MillestKullastunud = 0.5m, Kiudained = 6, Sool = 1.2m };
 
             var result = validator.Validate(command);

@@ -32,7 +32,12 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 Kuupaev = new DateTime(2025, 10, 1),
                 Tyyp = SoogikorraTyyp.Hommikusook,
-                PatsientId = 1
+                PatsientId = 1,
+                Read = new List<SoogikorraRida>
+                {
+                    new SoogikorraRida { Kogus = 100, ToiduaineId = 1 },
+                    new SoogikorraRida { Kogus = 50, ToiduaineId = 2 }
+                }
             };
             var repo = new SoogikordRepository(DbContext);
             var handler = new GetSoogikordQueryHandler(repo);
@@ -44,6 +49,7 @@ namespace KooliProjekt.Application.UnitTests.Features
             Assert.False(result.HasErrors);
             Assert.NotNull(result.Value);
             Assert.Equal(1, result.Value.Id);
+            Assert.Equal(2, result.Value.Read.Count);
         }
 
         [Fact]
@@ -183,6 +189,33 @@ namespace KooliProjekt.Application.UnitTests.Features
             {
                 await handler.Handle(query, CancellationToken.None);
             });
+        }
+
+        [Fact]
+        public async Task List_should_filter_by_search_parameters()
+        {
+            // Arrange
+            await DbContext.Soogikorrad.AddAsync(new Soogikord { Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 });
+            await DbContext.Soogikorrad.AddAsync(new Soogikord { Kuupaev = new DateTime(2025, 11, 1), Tyyp = SoogikorraTyyp.Louna, PatsientId = 2 });
+            await DbContext.SaveChangesAsync();
+
+            var handler = new ListSoogikorradQueryHandler(DbContext);
+            var query = new ListSoogikorradQuery
+            {
+                Page = 1,
+                PageSize = 10,
+                PatsientId = 1,
+                Tyyp = SoogikorraTyyp.Hommikusook,
+                KuupaevAlates = new DateTime(2025, 9, 1),
+                KuupaevKuni = new DateTime(2025, 10, 31)
+            };
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.False(result.HasErrors);
+            Assert.Equal(1, result.Value.RowCount);
         }
 
         // ===== DELETE TESTS =====
@@ -368,7 +401,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_patsient_id_is_invalid(int patsientId)
         {
-            var validator = new SaveSoogikordCommandValidator();
+            var validator = new SaveSoogikordCommandValidator(DbContext);
             var command = new SaveSoogikordCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = patsientId };
 
             var result = validator.Validate(command);
@@ -380,7 +413,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [Fact]
         public void SaveValidator_should_return_true_when_command_is_valid()
         {
-            var validator = new SaveSoogikordCommandValidator();
+            var validator = new SaveSoogikordCommandValidator(DbContext);
             var command = new SaveSoogikordCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Tyyp = SoogikorraTyyp.Hommikusook, PatsientId = 1 };
 
             var result = validator.Validate(command);

@@ -43,8 +43,20 @@ namespace KooliProjekt.Application.Features.SoogikorraRead
             }
 
             var result = new OperationResult<PagedResult<SoogikorraRida>>();
-            result.Value = await _dbContext
-                .SoogikorraRead
+
+            var query = _dbContext.SoogikorraRead.AsQueryable();
+
+            if (request.SoogikordId.HasValue)
+            {
+                query = query.Where(r => r.SoogikordId == request.SoogikordId.Value);
+            }
+
+            if (request.ToiduaineId.HasValue)
+            {
+                query = query.Where(r => r.ToiduaineId == request.ToiduaineId.Value);
+            }
+
+            result.Value = await query
                 .OrderBy(r => r.Id)
                 .GetPagedAsync(request.Page, request.PageSize);
 

@@ -1,5 +1,8 @@
-﻿namespace KooliProjekt.Application.Data
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace KooliProjekt.Application.Data
 {
+    [ExcludeFromCodeCoverage]
     public class ToDoItem
     {
         public int Id { get; set; }

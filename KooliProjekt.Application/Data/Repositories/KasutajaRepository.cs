@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace KooliProjekt.Application.Data.Repositories
 {
+    [ExcludeFromCodeCoverage]
     public class KasutajaRepository : BaseRepository<Kasutaja>, IKasutajaRepository
     {
         public KasutajaRepository(ApplicationDbContext dbContext) :

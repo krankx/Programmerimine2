@@ -193,6 +193,32 @@ namespace KooliProjekt.Application.UnitTests.Features
             });
         }
 
+        [Fact]
+        public async Task List_should_filter_by_search_parameters()
+        {
+            // Arrange
+            await DbContext.VererohuMootmised.AddAsync(new VererohuMootmine { Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(8, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 70, PatsientId = 1 });
+            await DbContext.VererohuMootmised.AddAsync(new VererohuMootmine { Kuupaev = new DateTime(2025, 11, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 130, Diastoolne = 85, Pulss = 75, PatsientId = 2 });
+            await DbContext.SaveChangesAsync();
+
+            var handler = new ListVererohuMootmisedQueryHandler(DbContext);
+            var query = new ListVererohuMootmisedQuery
+            {
+                Page = 1,
+                PageSize = 10,
+                PatsientId = 1,
+                KuupaevAlates = new DateTime(2025, 9, 1),
+                KuupaevKuni = new DateTime(2025, 10, 31)
+            };
+
+            // Act
+            var result = await handler.Handle(query, CancellationToken.None);
+
+            // Assert
+            Assert.False(result.HasErrors);
+            Assert.Equal(1, result.Value.RowCount);
+        }
+
         // ===== DELETE TESTS =====
 
         [Fact]
@@ -373,7 +399,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_sustoolne_is_invalid(int sustoolne)
         {
-            var validator = new SaveVererohuMootmineCommandValidator();
+            var validator = new SaveVererohuMootmineCommandValidator(DbContext);
             var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = sustoolne, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
 
             var result = validator.Validate(command);
@@ -387,7 +413,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_diastoolne_is_invalid(int diastoolne)
         {
-            var validator = new SaveVererohuMootmineCommandValidator();
+            var validator = new SaveVererohuMootmineCommandValidator(DbContext);
             var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = 120, Diastoolne = diastoolne, Pulss = 72, PatsientId = 1 };
 
             var result = validator.Validate(command);
@@ -401,7 +427,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_pulss_is_invalid(int pulss)
         {
-            var validator = new SaveVererohuMootmineCommandValidator();
+            var validator = new SaveVererohuMootmineCommandValidator(DbContext);
             var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = 120, Diastoolne = 80, Pulss = pulss, PatsientId = 1 };
 
             var result = validator.Validate(command);
@@ -415,7 +441,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [InlineData(-1)]
         public void SaveValidator_should_return_false_when_patsient_id_is_invalid(int patsientId)
         {
-            var validator = new SaveVererohuMootmineCommandValidator();
+            var validator = new SaveVererohuMootmineCommandValidator(DbContext);
             var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = patsientId };
 
             var result = validator.Validate(command);
@@ -427,7 +453,7 @@ namespace KooliProjekt.Application.UnitTests.Features
         [Fact]
         public void SaveValidator_should_return_true_when_command_is_valid()
         {
-            var validator = new SaveVererohuMootmineCommandValidator();
+            var validator = new SaveVererohuMootmineCommandValidator(DbContext);
             var command = new SaveVererohuMootmineCommand { Id = 0, Kuupaev = new DateTime(2025, 10, 1), Kellaaeg = new TimeSpan(9, 0, 0), Sustoolne = 120, Diastoolne = 80, Pulss = 72, PatsientId = 1 };
 
             var result = validator.Validate(command);

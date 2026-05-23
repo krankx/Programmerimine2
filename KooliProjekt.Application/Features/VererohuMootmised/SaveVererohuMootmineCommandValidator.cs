@@ -1,10 +1,11 @@
 using FluentValidation;
+using KooliProjekt.Application.Data;
 
 namespace KooliProjekt.Application.Features.VererohuMootmised
 {
     public class SaveVererohuMootmineCommandValidator : AbstractValidator<SaveVererohuMootmineCommand>
     {
-        public SaveVererohuMootmineCommandValidator()
+        public SaveVererohuMootmineCommandValidator(ApplicationDbContext context)
         {
             RuleFor(x => x.Sustoolne)
                 .GreaterThan(0).WithMessage("Sustoolne must be greater than zero");

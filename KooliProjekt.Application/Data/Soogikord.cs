@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace KooliProjekt.Application.Data
 {
@@ -10,6 +11,7 @@ namespace KooliProjekt.Application.Data
         Ohtusook = 3
     }
 
+    [ExcludeFromCodeCoverage]
     public class Soogikord : Entity
     {
         public DateTime Kuupaev { get; set; }

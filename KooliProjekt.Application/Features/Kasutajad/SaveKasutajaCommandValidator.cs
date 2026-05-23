@@ -1,10 +1,13 @@
 using FluentValidation;
+using KooliProjekt.Application.Data;
 
 namespace KooliProjekt.Application.Features.Kasutajad
 {
+    // Valideerimise klass SaveKasutajaCommand käsu jaoks
+    // Võetakse programmi poolt külge automaatselt
     public class SaveKasutajaCommandValidator : AbstractValidator<SaveKasutajaCommand>
     {
-        public SaveKasutajaCommandValidator()
+        public SaveKasutajaCommandValidator(ApplicationDbContext context)
         {
             RuleFor(x => x.Eesnimi)
                 .NotEmpty().WithMessage("Eesnimi is required")

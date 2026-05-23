@@ -1,10 +1,11 @@
 using FluentValidation;
+using KooliProjekt.Application.Data;
 
 namespace KooliProjekt.Application.Features.VeresuhkruMootmised
 {
     public class SaveVeresuhkruMootmineCommandValidator : AbstractValidator<SaveVeresuhkruMootmineCommand>
     {
-        public SaveVeresuhkruMootmineCommandValidator()
+        public SaveVeresuhkruMootmineCommandValidator(ApplicationDbContext context)
         {
             RuleFor(x => x.Veresuhkur)
                 .GreaterThan(0).WithMessage("Veresuhkur must be greater than zero");

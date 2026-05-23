@@ -43,8 +43,25 @@ namespace KooliProjekt.Application.Features.VererohuMootmised
             }
 
             var result = new OperationResult<PagedResult<VererohuMootmine>>();
-            result.Value = await _dbContext
-                .VererohuMootmised
+
+            var query = _dbContext.VererohuMootmised.AsQueryable();
+
+            if (request.PatsientId.HasValue)
+            {
+                query = query.Where(m => m.PatsientId == request.PatsientId.Value);
+            }
+
+            if (request.KuupaevAlates.HasValue)
+            {
+                query = query.Where(m => m.Kuupaev >= request.KuupaevAlates.Value);
+            }
+
+            if (request.KuupaevKuni.HasValue)
+            {
+                query = query.Where(m => m.Kuupaev <= request.KuupaevKuni.Value);
+            }
+
+            result.Value = await query
                 .OrderByDescending(m => m.Kuupaev)
                 .ThenByDescending(m => m.Kellaaeg)
                 .GetPagedAsync(request.Page, request.PageSize);

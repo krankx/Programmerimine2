@@ -43,8 +43,30 @@ namespace KooliProjekt.Application.Features.Soogikorrad
             }
 
             var result = new OperationResult<PagedResult<Soogikord>>();
-            result.Value = await _dbContext
-                .Soogikorrad
+
+            var query = _dbContext.Soogikorrad.AsQueryable();
+
+            if (request.PatsientId.HasValue)
+            {
+                query = query.Where(s => s.PatsientId == request.PatsientId.Value);
+            }
+
+            if (request.Tyyp.HasValue)
+            {
+                query = query.Where(s => s.Tyyp == request.Tyyp.Value);
+            }
+
+            if (request.KuupaevAlates.HasValue)
+            {
+                query = query.Where(s => s.Kuupaev >= request.KuupaevAlates.Value);
+            }
+
+            if (request.KuupaevKuni.HasValue)
+            {
+                query = query.Where(s => s.Kuupaev <= request.KuupaevKuni.Value);
+            }
+
+            result.Value = await query
                 .OrderByDescending(s => s.Kuupaev)
                 .ThenBy(s => s.Tyyp)
                 .GetPagedAsync(request.Page, request.PageSize);

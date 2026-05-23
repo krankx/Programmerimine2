@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using KooliProjekt.Application.Data;
@@ -7,7 +8,8 @@ using MediatR;
 
 namespace KooliProjekt.Application.Behaviors
 {
-    public class TransactionalBehavior<TRequest, TResponse> : 
+    [ExcludeFromCodeCoverage]
+    public class TransactionalBehavior<TRequest, TResponse> :
         IPipelineBehavior<TRequest, TResponse> 
         where TRequest : ITransactional
         where TResponse : OperationResult, new()
