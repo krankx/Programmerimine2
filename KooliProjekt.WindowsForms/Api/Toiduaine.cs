@@ -1,4 +1,4 @@
-namespace KooliProjekt.WindowsForms
+namespace KooliProjekt.WindowsForms.Api
 {
     public class Toiduaine
     {

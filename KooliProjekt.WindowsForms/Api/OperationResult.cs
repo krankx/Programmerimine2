@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace KooliProjekt.WindowsForms
+namespace KooliProjekt.WindowsForms.Api
 {
     [ExcludeFromCodeCoverage]
     public class OperationResult
