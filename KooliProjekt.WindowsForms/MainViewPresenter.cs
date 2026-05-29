@@ -59,5 +59,46 @@ namespace KooliProjekt.WindowsForms
                 _mainView.CurrentSool = _selected.Sool;
             }
         }
+
+        public async Task Save()
+        {
+            var toiduaine = new Toiduaine();
+            toiduaine.Id = _mainView.CurrentId;
+            toiduaine.Nimetus = _mainView.CurrentNimetus;
+            toiduaine.Energia = _mainView.CurrentEnergia;
+            toiduaine.Valgud = _mainView.CurrentValgud;
+            toiduaine.Susivesikud = _mainView.CurrentSusivesikud;
+            toiduaine.MillestSuhkrud = _mainView.CurrentMillestSuhkrud;
+            toiduaine.Rasvad = _mainView.CurrentRasvad;
+            toiduaine.MillestKullastunud = _mainView.CurrentMillestKullastunud;
+            toiduaine.Kiudained = _mainView.CurrentKiudained;
+            toiduaine.Sool = _mainView.CurrentSool;
+
+            var result = await _apiClient.Save(toiduaine);
+            if (result.HasErrors)
+            {
+                _mainView.ShowError("Viga salvestamisel", result);
+                return;
+            }
+
+            await LoadData();
+        }
+
+        public async Task Delete()
+        {
+            if (!_mainView.ConfirmDelete())
+            {
+                return;
+            }
+
+            var result = await _apiClient.Delete(_mainView.CurrentId);
+            if (result.HasErrors)
+            {
+                _mainView.ShowError("Viga kustutamisel", result);
+                return;
+            }
+
+            await LoadData();
+        }
     }
 }

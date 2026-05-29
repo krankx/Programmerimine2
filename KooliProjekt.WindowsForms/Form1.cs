@@ -107,58 +107,24 @@ namespace KooliProjekt.WindowsForms
 
         private async void DeleteCommand_Click(object sender, EventArgs e)
         {
-            var message = "Oled kindel, et soovid kustutada " + nimetusField.Text + "?";
-            var answer = MessageBox.Show(message, "Kustutamine", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (answer != DialogResult.Yes)
-            {
-                return;
-            }
-
-            var id = int.Parse(idField.Text);
-            var result = await _apiClient.Delete(id);
-            if (result.HasErrors)
-            {
-                ShowError("Viga kustutamisel", result);
-            }
-
-            await _mainViewPresenter.LoadData();
+            await _mainViewPresenter.Delete();
         }
 
         private void AddCommand_Click(object sender, EventArgs e)
         {
-            idField.Text = "0";
-            nimetusField.Text = "";
-            energiaField.Text = "0";
-            valgudField.Text = "0";
-            susivesikudField.Text = "0";
-            millestSuhkrudField.Text = "0";
-            rasvadField.Text = "0";
-            millestKullastunudField.Text = "0";
-            kiudainedField.Text = "0";
-            soolField.Text = "0";
+            _mainViewPresenter.SetSelection(null);
         }
 
         private async void SaveCommand_Click(object sender, EventArgs e)
         {
-            var toiduaine = new Toiduaine();
-            toiduaine.Id = int.Parse(idField.Text);
-            toiduaine.Nimetus = nimetusField.Text;
-            toiduaine.Energia = decimal.Parse(energiaField.Text);
-            toiduaine.Valgud = decimal.Parse(valgudField.Text);
-            toiduaine.Susivesikud = decimal.Parse(susivesikudField.Text);
-            toiduaine.MillestSuhkrud = decimal.Parse(millestSuhkrudField.Text);
-            toiduaine.Rasvad = decimal.Parse(rasvadField.Text);
-            toiduaine.MillestKullastunud = decimal.Parse(millestKullastunudField.Text);
-            toiduaine.Kiudained = decimal.Parse(kiudainedField.Text);
-            toiduaine.Sool = decimal.Parse(soolField.Text);
+            await _mainViewPresenter.Save();
+        }
 
-            var result = await _apiClient.Save(toiduaine);
-            if (result.HasErrors)
-            {
-                ShowError("Viga salvestamisel", result);
-            }
-
-            await _mainViewPresenter.LoadData();
+        public bool ConfirmDelete()
+        {
+            var message = "Oled kindel, et soovid kustutada " + nimetusField.Text + "?";
+            var answer = MessageBox.Show(message, "Kustutamine", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            return (answer == DialogResult.Yes);
         }
 
         // Koosta etteantud veateatest ja OperationResult sees olevatest vigadest

@@ -6,6 +6,7 @@ namespace KooliProjekt.WindowsForms
         Toiduaine SelectedItem { get; set; }
         void SetPresenter(MainViewPresenter presenter);
         void ShowError(string message, OperationResult result);
+        bool ConfirmDelete();
 
         int CurrentId { get; set; }
         string CurrentNimetus { get; set; }
