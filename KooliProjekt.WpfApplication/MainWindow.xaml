@@ -1,0 +1,67 @@
+<Window x:Class="KooliProjekt.WpfApplication.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KooliProjekt.WpfApplication"
+        mc:Ignorable="d"
+        Title="Toiduained" Height="600" Width="1000">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DataGrid x:Name="ToiduainedDataGrid"
+                  Grid.Column="0"
+                  CanUserAddRows="False"
+                  AutoGenerateColumns="True"
+                  ItemsSource="{Binding Data}"
+                  SelectedItem="{Binding SelectedItem}"/>
+
+        <StackPanel Grid.Column="1" Margin="10">
+            <TextBlock>ID</TextBlock>
+            <TextBlock Text="{Binding SelectedItem.Id}"></TextBlock>
+
+            <TextBlock>Nimetus</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Nimetus}"></TextBox>
+
+            <TextBlock>Energia</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Energia}"></TextBox>
+
+            <TextBlock>Valgud</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Valgud}"></TextBox>
+
+            <TextBlock>Susivesikud</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Susivesikud}"></TextBox>
+
+            <TextBlock>Millest suhkrud</TextBlock>
+            <TextBox Text="{Binding SelectedItem.MillestSuhkrud}"></TextBox>
+
+            <TextBlock>Rasvad</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Rasvad}"></TextBox>
+
+            <TextBlock>Millest kullastunud</TextBlock>
+            <TextBox Text="{Binding SelectedItem.MillestKullastunud}"></TextBox>
+
+            <TextBlock>Kiudained</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Kiudained}"></TextBox>
+
+            <TextBlock>Sool</TextBlock>
+            <TextBox Text="{Binding SelectedItem.Sool}"></TextBox>
+
+            <StackPanel
+                Orientation="Horizontal"
+                HorizontalAlignment="Center"
+                Margin="10">
+                <Button Margin="5" Padding="5" Command="{Binding AddNewCommand}">New</Button>
+                <Button Margin="5" Padding="5"
+                        Command="{Binding SaveCommand}"
+                        CommandParameter="{Binding SelectedItem}">Save</Button>
+                <Button Margin="5" Padding="5"
+                        Command="{Binding DeleteCommand}"
+                        CommandParameter="{Binding SelectedItem}">Delete</Button>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

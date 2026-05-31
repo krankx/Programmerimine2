@@ -22,6 +22,10 @@ bld/
 [Oo]bj/
 [Ll]og/
 
+## Test results and coverage reports
+TestResults/
+BuildReports/
+
 ## VS code
 .vscode/
 
