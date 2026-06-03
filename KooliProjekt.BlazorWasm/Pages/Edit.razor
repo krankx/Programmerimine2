@@ -1,0 +1,154 @@
+@page "/create"
+@page "/edit/{Id:int}"
+
+@inject KooliProjekt.BlazorWasm.IApiClient apiClient
+@inject NavigationManager NavManager
+
+<h3>@title</h3>
+
+<EditForm EditContext="editContext" OnSubmit="@FormSubmitted">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <p class="alert-danger">@error</p>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">ID</label>
+        <div class="col-sm-10">
+            @toiduaine.Id
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Nimetus</label>
+        <div class="col-sm-10">
+            <InputText class="form-control" @bind-Value="toiduaine.Nimetus" />
+            <ValidationMessage For="@(() => toiduaine.Nimetus)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Energia</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.Energia" />
+            <ValidationMessage For="@(() => toiduaine.Energia)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Valgud</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.Valgud" />
+            <ValidationMessage For="@(() => toiduaine.Valgud)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Susivesikud</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.Susivesikud" />
+            <ValidationMessage For="@(() => toiduaine.Susivesikud)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Millest suhkrud</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.MillestSuhkrud" />
+            <ValidationMessage For="@(() => toiduaine.MillestSuhkrud)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Rasvad</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.Rasvad" />
+            <ValidationMessage For="@(() => toiduaine.Rasvad)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Millest kullastunud</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.MillestKullastunud" />
+            <ValidationMessage For="@(() => toiduaine.MillestKullastunud)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Kiudained</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.Kiudained" />
+            <ValidationMessage For="@(() => toiduaine.Kiudained)" />
+        </div>
+    </div>
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label">Sool</label>
+        <div class="col-sm-10">
+            <InputNumber class="form-control" @bind-Value="toiduaine.Sool" />
+            <ValidationMessage For="@(() => toiduaine.Sool)" />
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="col-ms-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private string error = "";
+    private string title = "Edit";
+    private EditContext editContext;
+    private Toiduaine toiduaine = new Toiduaine();
+
+    private ValidationMessageStore messageStore;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(toiduaine);
+        messageStore = new ValidationMessageStore(editContext);
+
+        if (Id == 0)
+        {
+            title = "Add";
+            return;
+        }
+
+        var response = await apiClient.Get(Id);
+        if (!response.HasErrors)
+        {
+            toiduaine = response.Value;
+            editContext = new EditContext(toiduaine);
+            messageStore = new ValidationMessageStore(editContext);
+        }
+    }
+
+    private async Task FormSubmitted()
+    {
+        // Eemalda eelnevad veateated
+        messageStore?.Clear();
+
+        var result = await apiClient.Save(toiduaine);
+        if (!result.HasErrors)
+        {
+            NavManager.NavigateTo("/toiduained");
+            return;
+        }
+
+        if (result.Errors != null)
+        {
+            foreach (var error in result.Errors)
+            {
+                messageStore?.Add(new FieldIdentifier(toiduaine, string.Empty), error);
+            }
+        }
+
+        if (result.PropertyErrors != null)
+        {
+            foreach (var error in result.PropertyErrors)
+            {
+                var propertyName = error.Key[0].ToString().ToUpper() + error.Key.Substring(1);
+                messageStore?.Add(new FieldIdentifier(toiduaine, propertyName), error.Value);
+            }
+        }
+
+        // Teavita EditForm'i, et vead on muutunud
+        editContext?.NotifyValidationStateChanged();
+    }
+}

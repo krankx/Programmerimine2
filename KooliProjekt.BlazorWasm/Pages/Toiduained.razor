@@ -1,0 +1,59 @@
+@page "/toiduained"
+@inject IApiClient apiClient
+
+<PageTitle>Toiduained</PageTitle>
+
+<h1>Toiduained</h1>
+
+@if (toiduained == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <p><a class="btn btn-primary" href="/create">Add new</a></p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nimetus</th>
+                <th>Energia</th>
+                <th>Valgud</th>
+                <th>Susivesikud</th>
+                <th>Rasvad</th>
+                <th>Kiudained</th>
+                <th>Sool</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var toiduaine in toiduained)
+            {
+                <tr>
+                    <td>@toiduaine.Id</td>
+                    <td>@toiduaine.Nimetus</td>
+                    <td>@toiduaine.Energia</td>
+                    <td>@toiduaine.Valgud</td>
+                    <td>@toiduaine.Susivesikud</td>
+                    <td>@toiduaine.Rasvad</td>
+                    <td>@toiduaine.Kiudained</td>
+                    <td>@toiduaine.Sool</td>
+                    <td>
+                        <a class="btn btn-success" href="/edit/@toiduaine.Id">Edit</a>
+                        <button class="btn btn-danger">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IList<Toiduaine> toiduained;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await apiClient.List(1, 100);
+        toiduained = result.Value.Results;
+    }
+}
